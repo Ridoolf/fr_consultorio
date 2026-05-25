@@ -37,3 +37,26 @@ class Paciente(models.Model):
         return hoy.year - self.fecha_nacimiento.year - (
             (hoy.month, hoy.day) < (self.fecha_nacimiento.month, self.fecha_nacimiento.day)
         )
+
+class PacienteDocumento(models.Model):
+    TIPOS = [
+        ('historia_clinica', 'Historia clínica firmada'),
+        ('foto_antes', 'Foto antes'),
+        ('foto_despues', 'Foto después'),
+        ('otro', 'Otro'),
+    ]
+
+    paciente = models.ForeignKey(Paciente, on_delete=models.CASCADE, related_name='documentos')
+    tipo = models.CharField(max_length=50, choices=TIPOS, default='otro')
+    titulo = models.CharField(max_length=255, blank=True)
+    archivo = models.FileField(upload_to='pacientes/documentos/')
+    fecha = models.DateField(auto_now_add=True)
+    notas = models.TextField(blank=True)
+
+    class Meta:
+        ordering = ['-fecha', '-id']
+        verbose_name = "Documento de paciente"
+        verbose_name_plural = "Documentos de paciente"
+
+    def __str__(self):
+        return f"{self.paciente} - {self.get_tipo_display()} - {self.titulo or self.archivo.name}"

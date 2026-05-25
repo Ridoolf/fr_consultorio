@@ -1,8 +1,8 @@
 from rest_framework import viewsets, filters
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from .models import Paciente
-from .serializers import PacienteSerializer
+from .models import Paciente, PacienteDocumento
+from .serializers import PacienteSerializer, PacienteDocumentoSerializer
 
 class PacienteViewSet(viewsets.ModelViewSet):
     queryset = Paciente.objects.all()
@@ -38,3 +38,18 @@ class PacienteViewSet(viewsets.ModelViewSet):
         paciente.activo = True
         paciente.save()
         return Response({'status': 'paciente activado'})
+
+class PacienteDocumentoViewSet(viewsets.ModelViewSet):
+    queryset = PacienteDocumento.objects.select_related('paciente').all()
+    serializer_class = PacienteDocumentoSerializer
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ['paciente__nombre', 'paciente__apellido', 'paciente__dni', 'titulo']
+    ordering_fields = ['fecha', 'id']
+    ordering = ['-fecha', '-id']
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        paciente_id = self.request.query_params.get('paciente')
+        if paciente_id:
+            qs = qs.filter(paciente_id=paciente_id)
+        return qs

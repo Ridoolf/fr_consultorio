@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Paciente
+from .models import Paciente, PacienteDocumento
 
 @admin.register(Paciente)
 class PacienteAdmin(admin.ModelAdmin):
@@ -26,3 +26,9 @@ class PacienteAdmin(admin.ModelAdmin):
             'classes': ('collapse',)
         }),
     )
+    
+@admin.register(PacienteDocumento)
+class PacienteDocumentoAdmin(admin.ModelAdmin):
+    list_display = ('paciente', 'tipo', 'titulo', 'fecha')
+    list_filter = ('tipo', 'fecha')
+    search_fields = ('paciente__nombre', 'paciente__apellido', 'paciente__dni', 'titulo')
