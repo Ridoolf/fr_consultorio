@@ -134,6 +134,53 @@ function PacienteDocumentosPanel({ pacienteId }) {
               >
                 Ver / descargar
               </a>
+              <li
+                key={doc.id}
+                style={{
+                  padding: '0.4rem 0',
+                  borderBottom: '1px solid #eee',
+                  fontSize: '0.9rem',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                }}
+              >
+                <div>
+                  <div>{doc.titulo}</div>
+                  <div style={{ fontSize: '0.8rem', color: 'var(--color-texto-claro)' }}>
+                    {doc.fecha}
+                  </div>
+                </div>
+                <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
+                  <a
+                    href={doc.archivo}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{
+                      fontSize: '0.8rem',
+                      color: 'var(--color-principal)',
+                      textDecoration: 'underline',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    Ver / descargar
+                  </a>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      const ok = window.confirm('¿Eliminar este documento?');
+                      if (!ok) return;
+                      await documentosAPI.delete(doc.id);
+                      await cargarDocumentos();
+                    }}
+                    className="btn btn-secondary"
+                    style={{ padding: '0.2rem 0.5rem', fontSize: '0.75rem' }}
+                  >
+                    Eliminar
+                  </button>
+                </div>
+              </li>
             </li>
           ))}
         </ul>

@@ -48,4 +48,18 @@ export const documentosAPI = {
   delete: (id) => api.delete(`/pacientes-documentos/${id}/`),
 };
 
+// Tratamientos (catálogo)
+export const tratamientosAPI = {
+  getAll: (params = {}) => api.get('/tratamientos/', { params }),
+  create: (data) => api.post('/tratamientos/', data),
+  update: (id, data) => api.put(`/tratamientos/${id}/`, data),
+  delete: (id) => api.delete(`/tratamientos/${id}/`),
+};
+
+// Pagos
+export const pagosAPI = {
+  getAll: (params = {}) => api.get('/pagos/', { params }),
+  create: (data) => api.post('/pagos/', data),
+};
+
 export default api;

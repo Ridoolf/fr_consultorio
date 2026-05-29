@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { pacientesAPI, turnosAPI } from "../services/api";
+import { pacientesAPI, turnosAPI, tratamientosAPI } from "../services/api";
 
 const initialForm = {
   paciente: "",
@@ -33,6 +33,9 @@ function TurnoForm() {
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState(null);
   const [busquedaPaciente, setBusquedaPaciente] = useState("");
+  const [tratamientos, setTratamientos] = useState([]);
+  const [cargandoTratamientos, setCargandoTratamientos] = useState(true);
+
 
   // Cargar pacientes para el selector
   useEffect(() => {
@@ -48,6 +51,20 @@ function TurnoForm() {
       }
     };
     cargar();
+  }, []);
+
+  useEffect(() => {
+    const cargarTratamientos = async () => {
+      try {
+        const res = await tratamientosAPI.getAll({ activos: 'true' });
+        setTratamientos(res.data);
+      } catch {
+        // si falla, igual dejamos que pueda escribir a mano más adelante si quisieras
+      } finally {
+        setCargandoTratamientos(false);
+      }
+    };
+    cargarTratamientos();
   }, []);
 
   const handleChange = (e) => {
@@ -162,16 +179,27 @@ function TurnoForm() {
 
           {/* Motivo */}
           <div className="form-field">
-            <label className="form-label">Motivo</label>
-            <input
-              type="text"
-              name="motivo"
-              value={form.motivo}
-              onChange={handleChange}
-              placeholder="Ej: Control, dolor muela, limpieza..."
-              className="form-input"
-            />
+            <label className="form-label">Motivo (tratamiento)</label>
+            {cargandoTratamientos ? (
+              <div>Cargando tratamientos...</div>
+            ) : (
+              <select
+                name="motivo"
+                value={form.motivo}
+                onChange={handleChange}
+                className="form-select"
+                required
+              >
+                <option value="">Seleccionar tratamiento...</option>
+                {tratamientos.map((t) => (
+                  <option key={t.id} value={t.nombre}>
+                    {t.nombre}
+                  </option>
+                ))}
+              </select>
+            )}
           </div>
+
 
           {/* Notas internas */}
           <div className="form-field">
