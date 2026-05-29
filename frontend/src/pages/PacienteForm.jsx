@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { pacientesAPI } from '../services/api';
+import PacienteDocumentosPanel from '../components/PacienteDocumentosPanel';
+
 
 const initialForm = {
   nombre: '',
@@ -9,8 +11,6 @@ const initialForm = {
   fecha_nacimiento: '',
   telefono: '',
   email: '',
-  obra_social: '',
-  numero_afiliado: '',
   observaciones: '',
 };
 
@@ -40,8 +40,6 @@ function PacienteForm() {
           fecha_nacimiento: data.fecha_nacimiento || '',
           telefono: data.telefono || '',
           email: data.email || '',
-          obra_social: data.obra_social || '',
-          numero_afiliado: data.numero_afiliado || '',
           observaciones: data.observaciones || '',
         });
       })
@@ -177,31 +175,7 @@ function PacienteForm() {
             />
           </div>
         </div>
-
-        {/* Obra social + N° afiliado */}
-        <div className="form-row-2">
-          <div className="form-field">
-            <label className="form-label">Obra social</label>
-            <input
-              type="text"
-              name="obra_social"
-              value={form.obra_social}
-              onChange={handleChange}
-              className="form-input"
-            />
-          </div>
-          <div className="form-field">
-            <label className="form-label">N° afiliado</label>
-            <input
-              type="text"
-              name="numero_afiliado"
-              value={form.numero_afiliado}
-              onChange={handleChange}
-              className="form-input"
-            />
-          </div>
-        </div>
-
+        
         {/* Observaciones */}
         <div className="form-field">
           <label className="form-label">Observaciones</label>
@@ -232,6 +206,10 @@ function PacienteForm() {
           </button>
         </div>
       </form>
+
+      {esEdicion && (
+        <PacienteDocumentosPanel pacienteId={id} />
+      )}
     </div>
   );
 }

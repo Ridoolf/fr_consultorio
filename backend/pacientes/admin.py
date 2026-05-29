@@ -3,8 +3,8 @@ from .models import Paciente, PacienteDocumento
 
 @admin.register(Paciente)
 class PacienteAdmin(admin.ModelAdmin):
-    list_display = ['apellido', 'nombre', 'dni', 'telefono', 'obra_social', 'activo']
-    list_filter = ['activo', 'obra_social']
+    list_display = ['apellido', 'nombre', 'dni', 'telefono', 'activo']
+    list_filter = ['activo']
     search_fields = ['nombre', 'apellido', 'dni', 'telefono']
     readonly_fields = ['fecha_registro', 'fecha_actualizacion']
     
@@ -14,9 +14,6 @@ class PacienteAdmin(admin.ModelAdmin):
         }),
         ('Contacto', {
             'fields': ('telefono', 'email')
-        }),
-        ('Obra Social', {
-            'fields': ('obra_social', 'numero_afiliado')
         }),
         ('Información Adicional', {
             'fields': ('observaciones', 'activo')
@@ -29,6 +26,6 @@ class PacienteAdmin(admin.ModelAdmin):
     
 @admin.register(PacienteDocumento)
 class PacienteDocumentoAdmin(admin.ModelAdmin):
-    list_display = ('paciente', 'tipo', 'titulo', 'fecha')
-    list_filter = ('tipo', 'fecha')
+    list_display = ('paciente', 'titulo', 'fecha')
+    list_filter = ('fecha',)
     search_fields = ('paciente__nombre', 'paciente__apellido', 'paciente__dni', 'titulo')

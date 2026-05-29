@@ -33,4 +33,19 @@ export const turnosAPI = {
   cancelar: (id) => api.post(`/turnos/${id}/cancelar/`),
 };
 
+export const documentosAPI = {
+  // listar documentos de un paciente
+  getByPaciente: (pacienteId) =>
+    api.get('/pacientes-documentos/', { params: { paciente: pacienteId } }),
+
+  // subir documento
+  create: (data) =>
+    api.post('/pacientes-documentos/', data, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    }),
+
+  // borrar documento (si querés más adelante)
+  delete: (id) => api.delete(`/pacientes-documentos/${id}/`),
+};
+
 export default api;

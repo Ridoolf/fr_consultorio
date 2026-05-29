@@ -15,8 +15,6 @@ class PacienteSerializer(serializers.ModelSerializer):
             'edad',
             'telefono',
             'email',
-            'obra_social',
-            'numero_afiliado',
             'observaciones',
             'activo',
             'fecha_registro',
@@ -26,15 +24,11 @@ class PacienteSerializer(serializers.ModelSerializer):
 
 
 class PacienteDocumentoSerializer(serializers.ModelSerializer):
-    tipo_display = serializers.CharField(source='get_tipo_display', read_only=True)
-
     class Meta:
         model = PacienteDocumento
         fields = [
             'id',
             'paciente',
-            'tipo',
-            'tipo_display',
             'titulo',
             'archivo',
             'fecha',

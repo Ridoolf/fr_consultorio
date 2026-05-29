@@ -219,7 +219,6 @@ function PacientesList() {
               <th>Apellido y nombre</th>
               <th>DNI</th>
               <th>Teléfono</th>
-              <th>Obra social</th>
               <th>Estado</th>
               <th style={{ width: "210px" }}></th>
             </tr>
@@ -232,7 +231,6 @@ function PacientesList() {
                 </td>
                 <td>{p.dni}</td>
                 <td>{p.telefono || "-"}</td>
-                <td>{p.obra_social || "-"}</td>
                 <td>
                   <span
                     className={`badge ${p.activo ? "badge-activo" : "badge-inactivo"}`}
