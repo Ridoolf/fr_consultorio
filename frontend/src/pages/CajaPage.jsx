@@ -12,6 +12,28 @@ function CajaPage() {
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState(null);
   const [guardando, setGuardando] = useState(false);
+  const [pagos, setPagos] = useState([]);
+  const [cargandoPagos, setCargandoPagos] = useState(true);
+  const [filtros, setFiltros] = useState({
+    fecha: formatoFechaInput(hoy),
+    paciente: '',
+  });
+
+  const cargarPagos = async (f = filtros) => {
+    setCargandoPagos(true);
+    try {
+      const params = {};
+      if (f.fecha) params.fecha = f.fecha;
+      if (f.paciente) params.paciente = f.paciente;
+      const res = await pagosAPI.getAll(params);
+      setPagos(res.data);
+    } catch {
+      // opcional: podés setear error específico de pagos
+    } finally {
+      setCargandoPagos(false);
+    }
+  };
+
 
   const [form, setForm] = useState({
     paciente: '',
@@ -35,6 +57,7 @@ function CajaPage() {
         ]);
         setPacientes(pacRes.data);
         setTratamientos(tratRes.data);
+        await cargarPagos();   // 👈
       } catch {
         setError('No se pudieron cargar pacientes o tratamientos.');
       } finally {
@@ -43,6 +66,12 @@ function CajaPage() {
     };
     cargar();
   }, []);
+
+  useEffect(() => {
+    cargarPagos(filtros);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filtros.fecha, filtros.paciente]);
+
 
   const selectedTrat = tratamientos.find((t) => t.id === Number(form.tratamiento));
 
@@ -100,6 +129,7 @@ function CajaPage() {
       };
 
       await pagosAPI.create(payload);
+      await cargarPagos(filtros);
 
       // reset básico manteniendo fecha
       setForm((prev) => ({
@@ -265,6 +295,96 @@ function CajaPage() {
           </button>
         </div>
       </form>
+
+      {/* Pagos recientes */}
+      <div style={{ marginTop: '1.5rem' }}>
+        <h3
+          style={{
+            fontSize: '1rem',
+            marginBottom: '0.5rem',
+            color: 'var(--color-principal)',
+          }}
+        >
+          Pagos recientes
+        </h3>
+
+        {/* Filtros */}
+        <div
+          style={{
+            display: 'flex',
+            flexWrap: 'wrap',
+            gap: '0.75rem',
+            marginBottom: '0.75rem',
+            backgroundColor: '#f7ede4',
+            padding: '0.75rem',
+            borderRadius: '8px',
+          }}
+        >
+          <div className="form-field" style={{ flex: '0 0 160px' }}>
+            <label className="form-label">Fecha</label>
+            <input
+              type="date"
+              value={filtros.fecha}
+              onChange={(e) =>
+                setFiltros((prev) => ({ ...prev, fecha: e.target.value }))
+              }
+              className="form-input"
+            />
+          </div>
+          <div className="form-field" style={{ flex: '1 1 200px' }}>
+            <label className="form-label">Paciente</label>
+            <select
+              value={filtros.paciente}
+              onChange={(e) =>
+                setFiltros((prev) => ({ ...prev, paciente: e.target.value }))
+              }
+              className="form-select"
+            >
+              <option value="">Todos</option>
+              {pacientes.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.apellido}, {p.nombre} (DNI {p.dni})
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        {/* Lista de pagos */}
+        {cargandoPagos ? (
+          <div>Cargando pagos...</div>
+        ) : pagos.length === 0 ? (
+          <p>No hay pagos para esos filtros.</p>
+        ) : (
+          <table className="table">
+            <thead>
+              <tr>
+                <th>Fecha</th>
+                <th>Paciente</th>
+                <th>Tratamiento</th>
+                <th>Monto</th>
+                <th>Medio</th>
+              </tr>
+            </thead>
+            <tbody>
+              {pagos.map((p) => (
+                <tr key={p.id}>
+                  <td>{p.fecha}</td>
+                  <td>{p.paciente_nombre_completo}</td>
+                  <td>
+                    {p.items && p.items.length > 0
+                      ? p.items[0].tratamiento_nombre
+                      : '-'}
+                  </td>
+                  <td>${Number(p.monto_total).toLocaleString('es-AR')}</td>
+                  <td>{p.medio}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
+
     </div>
   );
 }

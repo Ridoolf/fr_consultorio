@@ -2,6 +2,9 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { pacientesAPI } from '../services/api';
 import PacienteDocumentosPanel from '../components/PacienteDocumentosPanel';
+import PacienteTurnosPanel from '../components/PacienteTurnosPanel';
+import PacientePagosPanel from '../components/PacientePagosPanel';
+
 
 
 const initialForm = {
@@ -208,7 +211,11 @@ function PacienteForm() {
       </form>
 
       {esEdicion && (
-        <PacienteDocumentosPanel pacienteId={id} />
+        <>
+          <PacienteDocumentosPanel pacienteId={id} />
+          <PacienteTurnosPanel pacienteId={id} />
+          <PacientePagosPanel pacienteId={id} />
+        </>
       )}
     </div>
   );

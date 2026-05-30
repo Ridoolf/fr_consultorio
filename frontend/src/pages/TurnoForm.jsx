@@ -30,18 +30,17 @@ function TurnoForm() {
 
   const [pacientes, setPacientes] = useState([]);
   const [cargandoPacientes, setCargandoPacientes] = useState(true);
-  const [guardando, setGuardando] = useState(false);
-  const [error, setError] = useState(null);
-  const [busquedaPaciente, setBusquedaPaciente] = useState("");
   const [tratamientos, setTratamientos] = useState([]);
   const [cargandoTratamientos, setCargandoTratamientos] = useState(true);
 
+  const [busquedaPaciente, setBusquedaPaciente] = useState("");
+  const [guardando, setGuardando] = useState(false);
+  const [error, setError] = useState(null);
 
-  // Cargar pacientes para el selector
+  // Cargar pacientes
   useEffect(() => {
     const cargar = async () => {
       try {
-        // incluimos inactivos = false para ver solo activos
         const res = await pacientesAPI.getAll({ activos: "false" });
         setPacientes(res.data);
       } catch {
@@ -53,13 +52,14 @@ function TurnoForm() {
     cargar();
   }, []);
 
+  // Cargar tratamientos
   useEffect(() => {
     const cargarTratamientos = async () => {
       try {
-        const res = await tratamientosAPI.getAll({ activos: 'true' });
+        const res = await tratamientosAPI.getAll({ activos: "true" });
         setTratamientos(res.data);
       } catch {
-        // si falla, igual dejamos que pueda escribir a mano más adelante si quisieras
+        // si falla, igual se puede escribir algo en notas internas
       } finally {
         setCargandoTratamientos(false);
       }
@@ -177,7 +177,7 @@ function TurnoForm() {
             />
           </div>
 
-          {/* Motivo */}
+          {/* Motivo (tratamiento del catálogo) */}
           <div className="form-field">
             <label className="form-label">Motivo (tratamiento)</label>
             {cargandoTratamientos ? (
@@ -200,7 +200,6 @@ function TurnoForm() {
             )}
           </div>
 
-
           {/* Notas internas */}
           <div className="form-field">
             <label className="form-label">Notas internas</label>
@@ -210,6 +209,7 @@ function TurnoForm() {
               onChange={handleChange}
               rows={2}
               className="form-textarea"
+              placeholder="Ej: urgencia, dolor agudo, detalle del caso..."
             />
           </div>
 

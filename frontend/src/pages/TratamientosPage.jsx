@@ -128,7 +128,7 @@ function TratamientosPage() {
         </div>
       </form>
 
-      {/* Lista */}
+            {/* Lista */}
       {cargando ? (
         <div>Cargando tratamientos...</div>
       ) : tratamientos.length === 0 ? (
@@ -139,7 +139,7 @@ function TratamientosPage() {
             <tr>
               <th>Nombre</th>
               <th>Precio base</th>
-              <th></th>
+              <th style={{ width: '150px' }}></th>
             </tr>
           </thead>
           <tbody>
@@ -147,7 +147,7 @@ function TratamientosPage() {
               <tr key={t.id}>
                 <td>{t.nombre}</td>
                 <td>${Number(t.precio_base).toLocaleString('es-AR')}</td>
-                <td>
+                <td style={{ display: 'flex', gap: '0.3rem' }}>
                   <button
                     type="button"
                     onClick={() => editar(t)}
@@ -156,12 +156,39 @@ function TratamientosPage() {
                   >
                     Editar
                   </button>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      const ok = window.confirm(
+                        `¿Eliminar el tratamiento "${t.nombre}"?`
+                      );
+                      if (!ok) return;
+                      try {
+                        await tratamientosAPI.delete(t.id);
+                        await cargarTratamientos();
+                        // si lo estaba editando, limpiamos el form
+                        if (form.id === t.id) resetForm();
+                      } catch {
+                        alert('No se pudo eliminar el tratamiento (puede estar usado en algún pago).');
+                      }
+                    }}
+                    className="btn btn-secondary"
+                    style={{
+                      padding: '0.25rem 0.6rem',
+                      fontSize: '0.8rem',
+                      borderColor: '#d9534f',
+                      color: '#a13835',
+                    }}
+                  >
+                    Eliminar
+                  </button>
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
       )}
+
     </div>
   );
 }
