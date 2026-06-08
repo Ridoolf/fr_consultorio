@@ -13,9 +13,10 @@ function HomePage() {
 
   return (
     <Card>
-      <PageHeader title="Inicio" subtitle={formatoFechaLindo(hoy)} />
+      <PageHeader title="Inicio" />
 
       <div className="home-welcome">
+        <p className="home-fecha">{formatoFechaLindo(hoy)}</p>
         {nombre && <p className="home-greeting">Hola, {nombre}</p>}
         <p className="home-frase">{fraseDelDia()}</p>
       </div>

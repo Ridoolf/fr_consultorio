@@ -592,13 +592,19 @@ a:hover {
 
 /* Home / Inicio */
 .home-welcome {
-  text-align: center;
+  margin-top: calc(-1 * var(--space-3));
   margin-bottom: var(--space-6);
-  padding: var(--space-4) var(--space-3);
+  padding-left: calc(48px + var(--space-3));
+}
+
+.home-fecha {
+  font-size: 0.9rem;
+  color: var(--color-texto-claro);
+  margin-bottom: var(--space-3);
 }
 
 .home-greeting {
-  font-size: 1.5rem;
+  font-size: 1.35rem;
   font-weight: 700;
   color: var(--color-principal);
   margin-bottom: var(--space-2);
@@ -608,9 +614,9 @@ a:hover {
   font-size: 1rem;
   color: var(--color-secundario);
   font-style: italic;
+  font-weight: 600;
   line-height: 1.5;
-  max-width: 28rem;
-  margin: 0 auto;
+  max-width: 32rem;
 }
 
 .home-quick-actions {
