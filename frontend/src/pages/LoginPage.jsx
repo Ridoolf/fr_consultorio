@@ -42,7 +42,13 @@ function LoginPage() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
       >
-        <h1 className="login-title">Consultorio</h1>
+        <div className="login-brand">
+          <img
+            src="/logo.jpeg"
+            alt="Odontología & Ortodoncia"
+            className="brand-logo brand-logo--lg"
+          />
+        </div>
         <p className="login-subtitle">Panel interno de gestión</p>
 
         {error && <div className="error-box">{error}</div>}

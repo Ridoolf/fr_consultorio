@@ -1,15 +1,18 @@
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap');
 
 :root {
-  --color-fondo: #daccbf;
-  --color-fondo-gradient: linear-gradient(160deg, #daccbf 0%, #e8ddd4 50%, #d4c4b5 100%);
-  --color-principal: #969173;
-  --color-principal-dark: #7a7660;
-  --color-secundario: #e6c0b4;
-  --color-texto: #333;
-  --color-texto-claro: #666;
+  --color-fondo: #f5f3f0;
+  --color-fondo-gradient: linear-gradient(160deg, #faf9f7 0%, #f0ede8 50%, #e8e4df 100%);
+  --color-principal: #708d63;
+  --color-principal-dark: #5a7350;
+  --color-principal-rgb: 112, 141, 99;
+  --color-secundario: #d989b5;
+  --color-secundario-light: #f3dfe8;
+  --color-secundario-rgb: 217, 137, 181;
+  --color-texto: #3d3d3d;
+  --color-texto-claro: #6b6b6b;
   --color-blanco: #fff;
-  --color-superficie: #fdf7f1;
+  --color-superficie: #fdfcfa;
   --color-error: #d9534f;
   --color-exito: #5cb85c;
   --radius-sm: 8px;
@@ -134,7 +137,7 @@ a:hover {
   right: 0;
   height: var(--nav-bottom-height);
   background: var(--color-blanco);
-  border-top: 1px solid rgba(150, 145, 115, 0.2);
+  border-top: 1px solid rgba(var(--color-principal-rgb), 0.15);
   display: flex;
   justify-content: space-around;
   align-items: center;
@@ -162,12 +165,12 @@ a:hover {
 
 .bottom-nav-link:hover {
   text-decoration: none;
-  background: rgba(230, 192, 180, 0.35);
+  background: rgba(var(--color-secundario-rgb), 0.2);
 }
 
 .bottom-nav-link.active {
   color: var(--color-principal);
-  background: rgba(150, 145, 115, 0.12);
+  background: rgba(var(--color-principal-rgb), 0.1);
 }
 
 .bottom-nav-icon {
@@ -220,7 +223,7 @@ a:hover {
   }
 
   .app-sidebar-link:hover {
-    background: rgba(230, 192, 180, 0.5);
+    background: rgba(var(--color-secundario-rgb), 0.25);
     color: var(--color-texto);
     text-decoration: none;
   }
@@ -255,10 +258,35 @@ a:hover {
   margin-bottom: var(--space-5);
 }
 
+.page-header-brand {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.brand-logo {
+  display: block;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.brand-logo--lg {
+  width: min(220px, 70vw);
+  height: auto;
+  margin: 0 auto var(--space-4);
+}
+
+.brand-logo--sm {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-sm);
+}
+
 .page-header-title {
   font-size: 1.35rem;
   font-weight: 700;
   color: var(--color-principal);
+  letter-spacing: 0.02em;
 }
 
 .page-header-subtitle {
@@ -322,7 +350,7 @@ a:hover {
 .form-select {
   padding: 0.65rem 0.85rem;
   border-radius: var(--radius-sm);
-  border: 1px solid #c9b8a8;
+  border: 1px solid rgba(var(--color-principal-rgb), 0.25);
   font-size: 1rem;
   font-family: inherit;
   background: var(--color-superficie);
@@ -338,7 +366,7 @@ a:hover {
 .form-select:focus {
   outline: none;
   border-color: var(--color-principal);
-  box-shadow: 0 0 0 3px rgba(150, 145, 115, 0.25);
+  box-shadow: 0 0 0 3px rgba(var(--color-principal-rgb), 0.2);
   background: var(--color-blanco);
 }
 
@@ -387,7 +415,7 @@ a:hover {
 }
 
 .btn-ghost {
-  background: rgba(150, 145, 115, 0.1);
+  background: rgba(var(--color-principal-rgb), 0.08);
   color: var(--color-principal);
 }
 
@@ -505,7 +533,7 @@ a:hover {
   border-radius: var(--radius-md);
   padding: var(--space-4);
   margin-bottom: var(--space-3);
-  border: 1px solid rgba(150, 145, 115, 0.15);
+  border: 1px solid rgba(var(--color-principal-rgb), 0.12);
   transition: box-shadow 0.2s;
 }
 
@@ -575,7 +603,7 @@ a:hover {
   margin-bottom: var(--space-5);
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
-  border-bottom: 2px solid rgba(150, 145, 115, 0.2);
+  border-bottom: 2px solid rgba(var(--color-principal-rgb), 0.15);
   padding-bottom: 0;
 }
 
@@ -596,7 +624,7 @@ a:hover {
 
 .tab.active {
   color: var(--color-principal);
-  border-bottom-color: var(--color-principal);
+  border-bottom-color: var(--color-secundario);
 }
 
 /* Login */
@@ -618,18 +646,17 @@ a:hover {
   box-shadow: var(--shadow-lg);
 }
 
-.login-title {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: var(--color-principal);
+.login-brand {
   text-align: center;
-  margin-bottom: var(--space-1);
+  margin-bottom: var(--space-5);
 }
 
 .login-subtitle {
   text-align: center;
   color: var(--color-texto-claro);
-  font-size: 0.9rem;
+  font-size: 0.85rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
   margin-bottom: var(--space-6);
 }
 
@@ -645,7 +672,7 @@ a:hover {
 .spinner {
   width: 36px;
   height: 36px;
-  border: 3px solid rgba(150, 145, 115, 0.2);
+  border: 3px solid rgba(var(--color-principal-rgb), 0.15);
   border-top-color: var(--color-principal);
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
@@ -777,7 +804,7 @@ a:hover {
   border-radius: var(--radius-md);
   font-size: 0.85rem;
   font-weight: 500;
-  background: rgba(150, 145, 115, 0.1);
+  background: rgba(var(--color-principal-rgb), 0.08);
   color: var(--color-texto-claro);
 }
 
@@ -787,7 +814,7 @@ a:hover {
 }
 
 .caja-total-box {
-  background: rgba(150, 145, 115, 0.12);
+  background: var(--color-secundario-light);
   border-radius: var(--radius-md);
   padding: var(--space-4);
   text-align: center;
@@ -819,7 +846,7 @@ a:hover {
   min-height: var(--touch-min);
   padding: 0.5rem 0.75rem;
   border-radius: var(--radius-sm);
-  border: 1px solid #c9b8a8;
+  border: 1px solid rgba(var(--color-principal-rgb), 0.25);
   font-family: inherit;
   font-size: 1rem;
 }
@@ -845,7 +872,7 @@ a:hover {
 /* Progress upload */
 .upload-progress {
   height: 4px;
-  background: rgba(150, 145, 115, 0.2);
+  background: rgba(var(--color-principal-rgb), 0.15);
   border-radius: var(--radius-full);
   overflow: hidden;
   margin-top: var(--space-2);
@@ -894,7 +921,7 @@ a:hover {
 }
 
 .combobox-toggle:hover {
-  background: rgba(150, 145, 115, 0.1);
+  background: rgba(var(--color-principal-rgb), 0.08);
 }
 
 .combobox-list {
@@ -910,7 +937,7 @@ a:hover {
   padding: var(--space-1);
   list-style: none;
   background: var(--color-blanco);
-  border: 1px solid #c9b8a8;
+  border: 1px solid rgba(var(--color-principal-rgb), 0.25);
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-md);
 }
@@ -933,7 +960,7 @@ a:hover {
 
 .combobox-option:hover,
 .combobox-option.selected {
-  background: rgba(230, 192, 180, 0.35);
+  background: rgba(var(--color-secundario-rgb), 0.2);
 }
 
 .combobox-option-name {
