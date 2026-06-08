@@ -39,27 +39,7 @@ function Layout({ children }) {
       </header>
 
       <main className="app-content">
-        <div className="app-body">
-          <aside className="app-sidebar">
-            <div className="app-sidebar-title">Secciones</div>
-            <ul className="app-sidebar-nav">
-              {navItems.map((item) => (
-                <li key={item.path}>
-                  <NavLink
-                    to={item.path}
-                    end={item.end}
-                    className={({ isActive }) =>
-                      `app-sidebar-link${isActive ? ' active' : ''}`
-                    }
-                  >
-                    {item.icon} {item.label}
-                  </NavLink>
-                </li>
-              ))}
-            </ul>
-          </aside>
-          <section className="app-main">{children}</section>
-        </div>
+        <section className="app-main">{children}</section>
       </main>
 
       <nav className="bottom-nav" aria-label="Navegación principal">

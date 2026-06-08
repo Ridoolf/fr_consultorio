@@ -65,12 +65,6 @@ a:hover {
   padding-bottom: var(--nav-bottom-height);
 }
 
-@media (min-width: 1024px) {
-  .app-root {
-    padding-bottom: 0;
-  }
-}
-
 .app-header {
   background: var(--color-principal);
   color: var(--color-blanco);
@@ -115,21 +109,11 @@ a:hover {
   flex: 1;
 }
 
-.app-body {
-  display: flex;
-  gap: var(--space-4);
-}
-
-.app-sidebar {
-  display: none;
-}
-
 .app-main {
-  flex: 1;
-  min-width: 0;
+  width: 100%;
 }
 
-/* Bottom nav — tablet/mobile primary */
+/* Bottom nav — navegación principal en todos los tamaños */
 .bottom-nav {
   position: fixed;
   bottom: 0;
@@ -178,59 +162,15 @@ a:hover {
   line-height: 1;
 }
 
-@media (min-width: 1024px) {
-  .bottom-nav {
-    display: none;
+@media (min-width: 768px) {
+  .bottom-nav-link {
+    font-size: 0.8rem;
+    min-width: 80px;
+    padding: var(--space-2) var(--space-4);
   }
 
-  .app-sidebar {
-    display: block;
-    width: 220px;
-    background: rgba(255, 255, 255, 0.6);
-    border-radius: var(--radius-lg);
-    padding: var(--space-4);
-    height: fit-content;
-    position: sticky;
-    top: calc(var(--header-height) + var(--space-4));
-    backdrop-filter: blur(8px);
-  }
-
-  .app-sidebar-title {
-    font-size: 0.75rem;
-    font-weight: 600;
-    color: var(--color-principal);
-    margin-bottom: var(--space-3);
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
-  }
-
-  .app-sidebar-nav {
-    list-style: none;
-  }
-
-  .app-sidebar-link {
-    display: block;
-    padding: 0.6rem 0.85rem;
-    margin-bottom: var(--space-1);
-    border-radius: var(--radius-full);
-    font-size: 0.9rem;
-    color: var(--color-texto-claro);
-    text-decoration: none;
-    transition: all 0.2s;
-    min-height: var(--touch-min);
-    display: flex;
-    align-items: center;
-  }
-
-  .app-sidebar-link:hover {
-    background: rgba(var(--color-secundario-rgb), 0.25);
-    color: var(--color-texto);
-    text-decoration: none;
-  }
-
-  .app-sidebar-link.active {
-    background: var(--color-principal);
-    color: var(--color-blanco);
+  .bottom-nav-icon {
+    font-size: 1.5rem;
   }
 }
 
@@ -458,12 +398,6 @@ a:hover {
   display: flex;
   align-items: center;
   justify-content: center;
-}
-
-@media (min-width: 1024px) {
-  .btn-fab {
-    bottom: var(--space-4);
-  }
 }
 
 /* Badges */
@@ -851,15 +785,6 @@ a:hover {
   flex-direction: column;
   gap: var(--space-2);
   width: min(90vw, 360px);
-}
-
-@media (min-width: 1024px) {
-  .toast-container {
-    bottom: var(--space-4);
-    right: var(--space-4);
-    left: auto;
-    transform: none;
-  }
 }
 
 .toast {
