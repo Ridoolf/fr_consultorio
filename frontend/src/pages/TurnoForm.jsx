@@ -8,6 +8,7 @@ import Card from '../components/ui/Card';
 import PageHeader from '../components/ui/PageHeader';
 import Button from '../components/ui/Button';
 import Spinner from '../components/ui/Spinner';
+import PacienteCombobox from '../components/ui/PacienteCombobox';
 
 const initialForm = {
   paciente: '',
@@ -36,7 +37,6 @@ function TurnoForm() {
   const [tratamientos, setTratamientos] = useState([]);
   const [cargando, setCargando] = useState(true);
   const [errorTratamientos, setErrorTratamientos] = useState(null);
-  const [busquedaPaciente, setBusquedaPaciente] = useState('');
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState(null);
 
@@ -82,6 +82,10 @@ function TurnoForm() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!form.paciente) {
+      setError('Seleccioná un paciente.');
+      return;
+    }
     setGuardando(true);
     setError(null);
     try {
@@ -101,11 +105,6 @@ function TurnoForm() {
     }
   };
 
-  const pacientesFiltrados = pacientes.filter((p) => {
-    const texto = `${p.nombre} ${p.apellido} ${p.dni}`.toLowerCase();
-    return texto.includes(busquedaPaciente.toLowerCase());
-  });
-
   if (cargando) return <Card><Spinner /></Card>;
 
   return (
@@ -116,33 +115,12 @@ function TurnoForm() {
       {errorTratamientos && <div className="error-box">{errorTratamientos}</div>}
 
       <form onSubmit={handleSubmit} className="form-grid">
-        <div className="form-field">
-          <label className="form-label">Buscar paciente</label>
-          <input
-            type="search"
-            className="form-input"
-            value={busquedaPaciente}
-            onChange={(e) => setBusquedaPaciente(e.target.value)}
-            placeholder="Nombre o DNI..."
-          />
-        </div>
-        <div className="form-field">
-          <label className="form-label">Paciente</label>
-          <select
-            name="paciente"
-            className="form-select"
-            value={form.paciente}
-            onChange={handleChange}
-            required
-          >
-            <option value="">Seleccionar...</option>
-            {pacientesFiltrados.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.apellido}, {p.nombre} (DNI {p.dni})
-              </option>
-            ))}
-          </select>
-        </div>
+        <PacienteCombobox
+          pacientes={pacientes}
+          value={form.paciente}
+          onChange={(id) => setForm((prev) => ({ ...prev, paciente: id }))}
+          required
+        />
 
         <div className="form-row-2">
           <div className="form-field">
