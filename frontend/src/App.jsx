@@ -9,6 +9,7 @@ import TurnosPage from './pages/TurnosPage';
 import TurnoForm from './pages/TurnoForm';
 import TratamientosPage from './pages/TratamientosPage';
 import CajaPage from './pages/CajaPage';
+import HomePage from './pages/HomePage';
 
 function App() {
   return (
@@ -21,7 +22,8 @@ function App() {
           <RequireAuth>
             <Layout>
               <Routes>
-                <Route path="/" element={<Navigate to="/pacientes" replace />} />
+                <Route path="/" element={<Navigate to="/inicio" replace />} />
+                <Route path="/inicio" element={<HomePage />} />
                 <Route path="/pacientes" element={<PacientesList />} />
                 <Route path="/pacientes/nuevo" element={<PacienteForm />} />
                 <Route path="/pacientes/:id" element={<PacienteForm />} />

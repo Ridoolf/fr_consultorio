@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Navigate, useLocation, useNavigate } from 'react-router-dom';
+import { Navigate, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import { getErrorMessage } from '../utils/errors';
@@ -8,8 +8,6 @@ import Button from '../components/ui/Button';
 function LoginPage() {
   const { login, isAuthenticated, loading } = useAuth();
   const navigate = useNavigate();
-  const location = useLocation();
-  const from = location.state?.from?.pathname || '/pacientes';
 
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -17,7 +15,7 @@ function LoginPage() {
   const [submitting, setSubmitting] = useState(false);
 
   if (!loading && isAuthenticated) {
-    return <Navigate to={from} replace />;
+    return <Navigate to="/inicio" replace />;
   }
 
   const handleSubmit = async (e) => {
@@ -26,7 +24,7 @@ function LoginPage() {
     setError(null);
     try {
       await login(username.trim(), password);
-      navigate(from, { replace: true });
+      navigate('/inicio', { replace: true });
     } catch (err) {
       setError(getErrorMessage(err, 'Usuario o contraseña incorrectos.'));
     } finally {

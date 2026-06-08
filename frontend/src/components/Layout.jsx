@@ -2,6 +2,7 @@ import { NavLink, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 const navItems = [
+  { path: '/inicio', label: 'Inicio', icon: '🏠', end: true },
   { path: '/pacientes', label: 'Pacientes', icon: '👤' },
   { path: '/turnos', label: 'Turnos', icon: '📅' },
   { path: '/tratamientos', label: 'Tratamientos', icon: '🦷' },
@@ -9,6 +10,7 @@ const navItems = [
 ];
 
 function getSectionTitle(pathname) {
+  if (pathname === '/inicio') return 'Inicio';
   if (pathname.startsWith('/pacientes')) return 'Pacientes';
   if (pathname.startsWith('/turnos')) return 'Turnos';
   if (pathname.startsWith('/tratamientos')) return 'Tratamientos';
@@ -45,6 +47,7 @@ function Layout({ children }) {
                 <li key={item.path}>
                   <NavLink
                     to={item.path}
+                    end={item.end}
                     className={({ isActive }) =>
                       `app-sidebar-link${isActive ? ' active' : ''}`
                     }
@@ -64,6 +67,7 @@ function Layout({ children }) {
           <NavLink
             key={item.path}
             to={item.path}
+            end={item.end}
             className={({ isActive }) =>
               `bottom-nav-link${isActive ? ' active' : ''}`
             }
