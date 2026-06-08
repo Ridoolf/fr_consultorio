@@ -1,90 +1,61 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { turnosAPI } from '../services/api';
+import { getErrorMessage } from '../utils/errors';
+import Badge from './ui/Badge';
+import Spinner from './ui/Spinner';
+import EmptyState from './ui/EmptyState';
+import Button from './ui/Button';
 
 function PacienteTurnosPanel({ pacienteId }) {
   const [turnos, setTurnos] = useState([]);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState(null);
 
-  const cargarTurnos = async () => {
-    setCargando(true);
-    setError(null);
-    try {
-      const res = await turnosAPI.getAll({ paciente: pacienteId });
-      setTurnos(res.data);
-    } catch {
-      setError('No se pudieron cargar los turnos de este paciente.');
-    } finally {
-      setCargando(false);
-    }
-  };
-
   useEffect(() => {
     if (!pacienteId) return;
-    cargarTurnos();
+    setCargando(true);
+    turnosAPI
+      .getAll({ paciente: pacienteId })
+      .then((res) => setTurnos(res.data))
+      .catch((err) => setError(getErrorMessage(err, 'No se pudieron cargar los turnos.')))
+      .finally(() => setCargando(false));
   }, [pacienteId]);
 
-  const colorEstado = (estado) => {
-    if (estado === 'pendiente') return '#856404';
-    if (estado === 'confirmado') return '#004085';
-    if (estado === 'realizado') return '#155724';
-    return '#721c24'; // cancelado
-  };
+  if (cargando) return <Spinner />;
+  if (error) return <div className="error-box">{error}</div>;
 
-  if (cargando) return <div>Cargando turnos del paciente...</div>;
+  if (turnos.length === 0) {
+    return (
+      <EmptyState
+        icon="📅"
+        title="Sin turnos"
+        description="Este paciente no tiene turnos registrados."
+        action={
+          <Link to={`/turnos/nuevo?paciente=${pacienteId}`}>
+            <Button variant="primary">+ Nuevo turno</Button>
+          </Link>
+        }
+      />
+    );
+  }
 
   return (
-    <div style={{ marginTop: '1.5rem' }}>
-      <h3
-        style={{
-          fontSize: '1rem',
-          marginBottom: '0.5rem',
-          color: 'var(--color-principal)',
-        }}
-      >
-        Turnos del paciente
-      </h3>
-
-      {error && (
-        <div style={{ color: 'var(--color-error)', marginBottom: '0.5rem' }}>
-          {error}
+    <div>
+      {turnos.map((t) => (
+        <div key={t.id} className="data-card">
+          <div className="data-card-header">
+            <div>
+              <div className="data-card-title">{t.fecha} · {t.hora_inicio?.slice(0, 5)}</div>
+              <div className="data-card-meta">{t.motivo || 'Sin motivo'}</div>
+            </div>
+            <Badge estado={t.estado} />
+          </div>
+          <Link to={`/turnos/${t.id}/editar`}>
+            <Button size="sm" variant="ghost">Editar</Button>
+          </Link>
         </div>
-      )}
-
-      {turnos.length === 0 ? (
-        <p>Este paciente aún no tiene turnos registrados.</p>
-      ) : (
-        <table className="table">
-          <thead>
-            <tr>
-              <th>Fecha</th>
-              <th>Hora</th>
-              <th>Motivo</th>
-              <th>Estado</th>
-            </tr>
-          </thead>
-          <tbody>
-            {turnos.map((t) => (
-              <tr key={t.id}>
-                <td>{t.fecha}</td>
-                <td>{t.hora_inicio.slice(0, 5)}</td>
-                <td>{t.motivo}</td>
-                <td>
-                  <span
-                    className="badge"
-                    style={{
-                      backgroundColor: 'rgba(0,0,0,0.03)',
-                      color: colorEstado(t.estado),
-                    }}
-                  >
-                    {t.estado.charAt(0).toUpperCase() + t.estado.slice(1)}
-                  </span>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
+      ))}
     </div>
   );
 }

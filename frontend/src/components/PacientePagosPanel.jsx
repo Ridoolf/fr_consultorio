@@ -1,77 +1,47 @@
 import { useEffect, useState } from 'react';
 import { pagosAPI } from '../services/api';
+import { getErrorMessage } from '../utils/errors';
+import Spinner from './ui/Spinner';
+import EmptyState from './ui/EmptyState';
 
 function PacientePagosPanel({ pacienteId }) {
   const [pagos, setPagos] = useState([]);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState(null);
 
-  const cargarPagos = async () => {
-    setCargando(true);
-    setError(null);
-    try {
-      const res = await pagosAPI.getAll({ paciente: pacienteId });
-      setPagos(res.data);
-    } catch {
-      setError('No se pudieron cargar los pagos de este paciente.');
-    } finally {
-      setCargando(false);
-    }
-  };
-
   useEffect(() => {
     if (!pacienteId) return;
-    cargarPagos();
+    setCargando(true);
+    pagosAPI
+      .getAll({ paciente: pacienteId })
+      .then((res) => setPagos(res.data))
+      .catch((err) => setError(getErrorMessage(err, 'No se pudieron cargar los pagos.')))
+      .finally(() => setCargando(false));
   }, [pacienteId]);
 
-  if (cargando) return <div>Cargando pagos del paciente...</div>;
+  if (cargando) return <Spinner />;
+  if (error) return <div className="error-box">{error}</div>;
+  if (pagos.length === 0) {
+    return <EmptyState icon="💰" title="Sin pagos" description="Este paciente no tiene pagos registrados." />;
+  }
 
   return (
-    <div style={{ marginTop: '1.5rem' }}>
-      <h3
-        style={{
-          fontSize: '1rem',
-          marginBottom: '0.5rem',
-          color: 'var(--color-principal)',
-        }}
-      >
-        Pagos del paciente
-      </h3>
-
-      {error && (
-        <div style={{ color: 'var(--color-error)', marginBottom: '0.5rem' }}>
-          {error}
+    <div>
+      {pagos.map((p) => (
+        <div key={p.id} className="data-card">
+          <div className="data-card-header">
+            <div>
+              <div className="data-card-title">{p.fecha}</div>
+              <div className="data-card-meta">
+                {p.items?.[0]?.tratamiento_nombre || '-'} · {p.medio}
+              </div>
+            </div>
+            <strong style={{ color: 'var(--color-principal)' }}>
+              ${Number(p.monto_total).toLocaleString('es-AR')}
+            </strong>
+          </div>
         </div>
-      )}
-
-      {pagos.length === 0 ? (
-        <p>Este paciente aún no tiene pagos registrados.</p>
-      ) : (
-        <table className="table">
-          <thead>
-            <tr>
-              <th>Fecha</th>
-              <th>Tratamiento</th>
-              <th>Monto</th>
-              <th>Medio</th>
-            </tr>
-          </thead>
-          <tbody>
-            {pagos.map((p) => (
-              <tr key={p.id}>
-                <td>{p.fecha}</td>
-                <td>
-                  {p.items && p.items.length > 0
-                    ? p.items[0].tratamiento_nombre
-                    : '-'}
-                </td>
-                <td>${Number(p.monto_total).toLocaleString('es-AR')}</td>
-                <td>{p.medio}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
+      ))}
     </div>
   );
 }

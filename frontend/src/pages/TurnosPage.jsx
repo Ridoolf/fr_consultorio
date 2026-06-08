@@ -1,30 +1,30 @@
-import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { turnosAPI } from "../services/api";
-
-function formatoFechaInput(fecha) {
-  return fecha.toISOString().slice(0, 10); // YYYY-MM-DD
-}
-
-function formatoFechaLindo(yyyymmdd) {
-  const [year, month, day] = yyyymmdd.split("-").map(Number);
-  const fecha = new Date(year, month - 1, day);
-  const opciones = {
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  };
-  return fecha.toLocaleDateString("es-AR", opciones);
-}
+import { useEffect, useState } from 'react';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { motion } from 'framer-motion';
+import { turnosAPI } from '../services/api';
+import { getErrorMessage } from '../utils/errors';
+import { useToast } from '../context/ToastContext';
+import { hoyLocal, formatoFechaLindo, sumarDias } from '../utils/fechas';
+import Card from '../components/ui/Card';
+import PageHeader from '../components/ui/PageHeader';
+import Button from '../components/ui/Button';
+import Badge from '../components/ui/Badge';
+import Spinner from '../components/ui/Spinner';
+import EmptyState from '../components/ui/EmptyState';
+import ConfirmDialog from '../components/ui/ConfirmDialog';
 
 function TurnosPage() {
-  const hoy = new Date();
-  const [fecha, setFecha] = useState(formatoFechaInput(hoy));
+  const [searchParams, setSearchParams] = useSearchParams();
+  const fecha = searchParams.get('fecha') || hoyLocal();
   const [turnos, setTurnos] = useState([]);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState(null);
+  const [accionId, setAccionId] = useState(null);
+  const [confirm, setConfirm] = useState(null);
   const navigate = useNavigate();
+  const { showToast } = useToast();
+
+  const setFecha = (f) => setSearchParams({ fecha: f });
 
   const cargarTurnos = async (f) => {
     setCargando(true);
@@ -32,256 +32,175 @@ function TurnosPage() {
     try {
       const res = await turnosAPI.getAll({ fecha: f });
       setTurnos(res.data);
-    } catch {
-      setError("No se pudieron cargar los turnos.");
+    } catch (err) {
+      setError(getErrorMessage(err, 'No se pudieron cargar los turnos.'));
     } finally {
       setCargando(false);
     }
   };
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     cargarTurnos(fecha);
   }, [fecha]);
 
-  const cambiarEstado = async (id, accion) => {
-    if (accion === "realizado") {
-      const ok = window.confirm("¿Marcar este turno como realizado?");
-      if (!ok) return;
-      await turnosAPI.marcarRealizado(id);
-    } else if (accion === "cancelar") {
-      const ok = window.confirm("¿Cancelar este turno?");
-      if (!ok) return;
-      await turnosAPI.cancelar(id);
+  const ejecutarAccion = async (id, accion) => {
+    setAccionId(id);
+    try {
+      if (accion === 'confirmar') await turnosAPI.confirmar(id);
+      if (accion === 'realizado') await turnosAPI.marcarRealizado(id);
+      if (accion === 'cancelar') await turnosAPI.cancelar(id);
+      showToast('Turno actualizado', 'success');
+      await cargarTurnos(fecha);
+    } catch (err) {
+      showToast(getErrorMessage(err, 'No se pudo actualizar el turno.'), 'error');
+    } finally {
+      setAccionId(null);
+      setConfirm(null);
     }
-    await cargarTurnos(fecha);
-  };
-
-  const irADia = (delta) => {
-    const d = new Date(fecha);
-    d.setDate(d.getDate() + delta);
-    setFecha(formatoFechaInput(d));
-  };
-
-  const badgeStyles = (estado) => {
-    if (estado === "pendiente") {
-      return {
-        bg: "rgba(255, 193, 7, 0.15)",
-        color: "#856404",
-        texto: "Pendiente",
-      };
-    }
-    if (estado === "confirmado") {
-      return {
-        bg: "rgba(0, 123, 255, 0.15)",
-        color: "#004085",
-        texto: "Confirmado",
-      };
-    }
-    if (estado === "realizado") {
-      return {
-        bg: "rgba(40, 167, 69, 0.15)",
-        color: "#155724",
-        texto: "Realizado",
-      };
-    }
-    return {
-      bg: "rgba(220, 53, 69, 0.15)",
-      texto: "Cancelado",
-      color: "#721c24",
-    };
   };
 
   return (
-    <div className="card">
-      {/* Línea principal: Día + selector de fecha */}
-      <div
-        style={{
-          display: "flex",
-          flexWrap: "wrap",
-          justifyContent: "space-between",
-          alignItems: "center",
-          gap: "0.75rem",
-          marginBottom: "0.75rem",
-        }}
-      >
+    <Card>
+      <PageHeader
+        title="Agenda"
+        subtitle={formatoFechaLindo(fecha)}
+      />
+
+      <div className="date-nav">
+        <Button variant="secondary" onClick={() => setFecha(sumarDias(fecha, -1))}>
+          ◀ Anterior
+        </Button>
+        <input
+          type="date"
+          value={fecha}
+          onChange={(e) => setFecha(e.target.value)}
+          aria-label="Seleccionar fecha"
+        />
+        <Button variant="ghost" onClick={() => setFecha(hoyLocal())}>
+          Hoy
+        </Button>
+        <Button variant="secondary" onClick={() => setFecha(sumarDias(fecha, 1))}>
+          Siguiente ▶
+        </Button>
+      </div>
+
+      {error && <div className="error-box">{error}</div>}
+
+      {cargando ? (
+        <Spinner label="Cargando turnos..." />
+      ) : turnos.length === 0 ? (
+        <EmptyState
+          icon="📅"
+          title="Sin turnos"
+          description="No hay turnos para esta fecha."
+          action={
+            <Button variant="primary" onClick={() => navigate(`/turnos/nuevo?fecha=${fecha}`)}>
+              + Nuevo turno
+            </Button>
+          }
+        />
+      ) : (
         <div>
-          <div className="card-title">Turnos</div>
-          <div
-            style={{ fontSize: "0.9rem", color: "var(--color-texto-claro)" }}
-          >
-            Día: {formatoFechaLindo(fecha)}
-          </div>
+          {turnos.map((t, i) => (
+            <motion.div
+              key={t.id}
+              className="turno-card"
+              initial={{ opacity: 0, x: -8 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: i * 0.05 }}
+            >
+              <div className="turno-hora">
+                {t.hora_inicio?.slice(0, 5)}
+                <div style={{ fontSize: '0.75rem', fontWeight: 400, color: 'var(--color-texto-claro)' }}>
+                  {t.hora_fin?.slice(0, 5)}
+                </div>
+              </div>
+              <div style={{ flex: 1 }}>
+                <div className="data-card-header">
+                  <Link to={`/pacientes/${t.paciente}`} className="data-card-title">
+                    {t.paciente_nombre_completo}
+                  </Link>
+                  <Badge estado={t.estado} />
+                </div>
+                <div className="data-card-meta">{t.motivo || 'Sin motivo'}</div>
+                <div className="data-card-actions">
+                  {t.estado === 'pendiente' && (
+                    <Button
+                      size="sm"
+                      variant="primary"
+                      disabled={accionId === t.id}
+                      onClick={() => ejecutarAccion(t.id, 'confirmar')}
+                    >
+                      Confirmar
+                    </Button>
+                  )}
+                  {t.estado !== 'realizado' && t.estado !== 'cancelado' && (
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      disabled={accionId === t.id}
+                      onClick={() =>
+                        setConfirm({
+                          id: t.id,
+                          accion: 'realizado',
+                          title: 'Marcar realizado',
+                          message: '¿Marcar este turno como realizado?',
+                        })
+                      }
+                    >
+                      Realizado
+                    </Button>
+                  )}
+                  {t.estado !== 'cancelado' && t.estado !== 'realizado' && (
+                    <Button
+                      size="sm"
+                      variant="danger"
+                      disabled={accionId === t.id}
+                      onClick={() =>
+                        setConfirm({
+                          id: t.id,
+                          accion: 'cancelar',
+                          title: 'Cancelar turno',
+                          message: '¿Cancelar este turno?',
+                          danger: true,
+                        })
+                      }
+                    >
+                      Cancelar
+                    </Button>
+                  )}
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => navigate(`/turnos/${t.id}/editar`)}
+                  >
+                    Editar
+                  </Button>
+                </div>
+              </div>
+            </motion.div>
+          ))}
         </div>
-        <button
-          type="button"
-          onClick={() => navigate(`/turnos/nuevo?fecha=${fecha}`)}
-          className="btn btn-primary"
-          style={{ fontSize: "0.85rem" }}
-        >
-          + Nuevo turno
-        </button>
-      </div>
-
-      {/* Flechas de navegación de día */}
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "center",
-          gap: "1rem",
-          marginBottom: "0.9rem",
-          flexWrap: "wrap",
-        }}
-      >
-        <button
-          type="button"
-          onClick={() => irADia(-1)}
-          className="btn btn-secondary"
-          style={{ padding: "0.35rem 0.9rem" }}
-        >
-          ◀ Día anterior
-        </button>
-        <button
-          type="button"
-          onClick={() => irADia(1)}
-          className="btn btn-secondary"
-          style={{ padding: "0.35rem 0.9rem" }}
-        >
-          Día siguiente ▶
-        </button>
-      </div>
-
-      {/* Leyenda simple de estados */}
-      <div
-        style={{
-          display: "flex",
-          flexWrap: "wrap",
-          gap: "0.5rem",
-          marginBottom: "0.75rem",
-          fontSize: "0.8rem",
-        }}
-      >
-        <span>Estados:</span>
-        <span
-          className="badge"
-          style={{
-            backgroundColor: "rgba(255, 193, 7, 0.15)",
-            color: "#856404",
-          }}
-        >
-          Pendiente
-        </span>
-        <span
-          className="badge"
-          style={{
-            backgroundColor: "rgba(0, 123, 255, 0.15)",
-            color: "#004085",
-          }}
-        >
-          Confirmado
-        </span>
-        <span
-          className="badge"
-          style={{
-            backgroundColor: "rgba(40, 167, 69, 0.15)",
-            color: "#155724",
-          }}
-        >
-          Realizado
-        </span>
-        <span
-          className="badge"
-          style={{
-            backgroundColor: "rgba(220, 53, 69, 0.15)",
-            color: "#721c24",
-          }}
-        >
-          Cancelado
-        </span>
-      </div>
-
-      {cargando && <div>Cargando turnos...</div>}
-      {error && <div style={{ color: "var(--color-error)" }}>{error}</div>}
-
-      {!cargando && !error && (
-        <>
-          {turnos.length === 0 ? (
-            <p>No hay turnos para esta fecha.</p>
-          ) : (
-            <table className="table">
-              <thead>
-                <tr>
-                  <th>Hora</th>
-                  <th>Paciente</th>
-                  <th>Motivo</th>
-                  <th>Estado</th>
-                  <th>Acciones</th>
-                </tr>
-              </thead>
-              <tbody>
-                {turnos.map((t) => {
-                  const est = badgeStyles(t.estado);
-                  return (
-                    <tr key={t.id}>
-                      <td>
-                        {t.hora_inicio.slice(0, 5)} - {t.hora_fin.slice(0, 5)}
-                      </td>
-                      <td>{t.paciente_nombre_completo}</td>
-                      <td>{t.motivo || "-"}</td>
-                      <td>
-                        <span
-                          className="badge"
-                          style={{
-                            backgroundColor: est.bg,
-                            color: est.color,
-                          }}
-                        >
-                          {est.texto}
-                        </span>
-                      </td>
-                      <td
-                        style={{
-                          display: "flex",
-                          gap: "0.4rem",
-                          flexWrap: "wrap",
-                        }}
-                      >
-                        <button
-                          type="button"
-                          onClick={() => cambiarEstado(t.id, "realizado")}
-                          className="btn btn-secondary"
-                          disabled={t.estado === "realizado"}
-                          style={{
-                            padding: "0.25rem 0.7rem",
-                            fontSize: "0.8rem",
-                            opacity: t.estado === "realizado" ? 0.6 : 1,
-                          }}
-                        >
-                          Marcar realizado
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => cambiarEstado(t.id, "cancelar")}
-                          className="btn btn-secondary"
-                          disabled={t.estado === "cancelado"}
-                          style={{
-                            padding: "0.25rem 0.7rem",
-                            fontSize: "0.8rem",
-                            opacity: t.estado === "cancelado" ? 0.6 : 1,
-                          }}
-                        >
-                          Cancelar turno
-                        </button>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          )}
-        </>
       )}
-    </div>
+
+      <button
+        type="button"
+        className="btn-fab"
+        aria-label="Nuevo turno"
+        onClick={() => navigate(`/turnos/nuevo?fecha=${fecha}`)}
+      >
+        +
+      </button>
+
+      <ConfirmDialog
+        open={Boolean(confirm)}
+        title={confirm?.title}
+        message={confirm?.message}
+        danger={confirm?.danger}
+        onCancel={() => setConfirm(null)}
+        onConfirm={() => confirm && ejecutarAccion(confirm.id, confirm.accion)}
+      />
+    </Card>
   );
 }
 

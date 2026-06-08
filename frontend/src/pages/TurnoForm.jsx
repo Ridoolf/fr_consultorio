@@ -1,77 +1,82 @@
-import { useEffect, useState } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
-import { pacientesAPI, turnosAPI, tratamientosAPI } from "../services/api";
+import { useEffect, useState } from 'react';
+import { useNavigate, useLocation, useParams } from 'react-router-dom';
+import { pacientesAPI, turnosAPI, tratamientosAPI } from '../services/api';
+import { getErrorMessage } from '../utils/errors';
+import { useToast } from '../context/ToastContext';
+import { hoyLocal } from '../utils/fechas';
+import Card from '../components/ui/Card';
+import PageHeader from '../components/ui/PageHeader';
+import Button from '../components/ui/Button';
+import Spinner from '../components/ui/Spinner';
 
 const initialForm = {
-  paciente: "",
-  fecha: "",
-  hora_inicio: "",
+  paciente: '',
+  fecha: '',
+  hora_inicio: '',
   duracion_minutos: 30,
-  motivo: "",
-  notas_internas: "",
+  motivo: '',
+  notas_internas: '',
 };
-
-function formatoFechaInput(fecha) {
-  return fecha.toISOString().slice(0, 10); // YYYY-MM-DD
-}
 
 function TurnoForm() {
   const navigate = useNavigate();
   const location = useLocation();
-
-  // leer fecha de la URL si viene: /turnos/nuevo?fecha=2026-05-25
+  const { id } = useParams();
+  const esEdicion = Boolean(id);
   const params = new URLSearchParams(location.search);
-  const fechaInicial = params.get("fecha") || formatoFechaInput(new Date());
+  const { showToast } = useToast();
 
-  const [form, setForm] = useState(() => ({
+  const [form, setForm] = useState({
     ...initialForm,
-    fecha: fechaInicial,
-  }));
+    fecha: params.get('fecha') || hoyLocal(),
+    paciente: params.get('paciente') || '',
+  });
 
   const [pacientes, setPacientes] = useState([]);
-  const [cargandoPacientes, setCargandoPacientes] = useState(true);
   const [tratamientos, setTratamientos] = useState([]);
-  const [cargandoTratamientos, setCargandoTratamientos] = useState(true);
-
-  const [busquedaPaciente, setBusquedaPaciente] = useState("");
+  const [cargando, setCargando] = useState(true);
+  const [errorTratamientos, setErrorTratamientos] = useState(null);
+  const [busquedaPaciente, setBusquedaPaciente] = useState('');
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState(null);
 
-  // Cargar pacientes
   useEffect(() => {
     const cargar = async () => {
       try {
-        const res = await pacientesAPI.getAll({ activos: "false" });
-        setPacientes(res.data);
-      } catch {
-        setError("No se pudieron cargar los pacientes.");
+        const [pacRes, tratRes] = await Promise.all([
+          pacientesAPI.getAll(),
+          tratamientosAPI.getAll({ activos: 'true' }),
+        ]);
+        setPacientes(pacRes.data);
+        setTratamientos(tratRes.data);
+
+        if (esEdicion) {
+          const turnoRes = await turnosAPI.getById(id);
+          const t = turnoRes.data;
+          setForm({
+            paciente: String(t.paciente),
+            fecha: t.fecha,
+            hora_inicio: t.hora_inicio?.slice(0, 5) || '',
+            duracion_minutos: t.duracion_minutos,
+            motivo: t.motivo || '',
+            notas_internas: t.notas_internas || '',
+          });
+        }
+      } catch (err) {
+        setError(getErrorMessage(err, 'No se pudieron cargar los datos.'));
+        if (!esEdicion) setErrorTratamientos('No se pudieron cargar tratamientos.');
       } finally {
-        setCargandoPacientes(false);
+        setCargando(false);
       }
     };
     cargar();
-  }, []);
-
-  // Cargar tratamientos
-  useEffect(() => {
-    const cargarTratamientos = async () => {
-      try {
-        const res = await tratamientosAPI.getAll({ activos: "true" });
-        setTratamientos(res.data);
-      } catch {
-        // si falla, igual se puede escribir algo en notas internas
-      } finally {
-        setCargandoTratamientos(false);
-      }
-    };
-    cargarTratamientos();
-  }, []);
+  }, [esEdicion, id]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm((prev) => ({
       ...prev,
-      [name]: name === "duracion_minutos" ? Number(value) : value,
+      [name]: name === 'duracion_minutos' ? Number(value) : value,
     }));
   };
 
@@ -79,13 +84,18 @@ function TurnoForm() {
     e.preventDefault();
     setGuardando(true);
     setError(null);
-
     try {
-      await turnosAPI.create(form);
-      navigate("/turnos");
+      const payload = { ...form, paciente: Number(form.paciente) };
+      if (esEdicion) {
+        await turnosAPI.update(id, payload);
+        showToast('Turno actualizado', 'success');
+      } else {
+        await turnosAPI.create(payload);
+        showToast('Turno creado', 'success');
+      }
+      navigate(`/turnos?fecha=${form.fecha}`);
     } catch (err) {
-      console.error(err);
-      setError("No se pudo guardar el turno. Revisá los datos.");
+      setError(getErrorMessage(err, 'No se pudo guardar el turno.'));
     } finally {
       setGuardando(false);
     }
@@ -96,143 +106,85 @@ function TurnoForm() {
     return texto.includes(busquedaPaciente.toLowerCase());
   });
 
+  if (cargando) return <Card><Spinner /></Card>;
+
   return (
-    <div className="card">
-      <div className="card-title">Nuevo turno</div>
+    <Card>
+      <PageHeader title={esEdicion ? 'Editar turno' : 'Nuevo turno'} />
 
-      {error && (
-        <div style={{ color: "var(--color-error)", marginBottom: "0.5rem" }}>
-          {error}
+      {error && <div className="error-box">{error}</div>}
+      {errorTratamientos && <div className="error-box">{errorTratamientos}</div>}
+
+      <form onSubmit={handleSubmit} className="form-grid">
+        <div className="form-field">
+          <label className="form-label">Buscar paciente</label>
+          <input
+            type="search"
+            className="form-input"
+            value={busquedaPaciente}
+            onChange={(e) => setBusquedaPaciente(e.target.value)}
+            placeholder="Nombre o DNI..."
+          />
         </div>
-      )}
+        <div className="form-field">
+          <label className="form-label">Paciente</label>
+          <select
+            name="paciente"
+            className="form-select"
+            value={form.paciente}
+            onChange={handleChange}
+            required
+          >
+            <option value="">Seleccionar...</option>
+            {pacientesFiltrados.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.apellido}, {p.nombre} (DNI {p.dni})
+              </option>
+            ))}
+          </select>
+        </div>
 
-      {cargandoPacientes ? (
-        <div>Cargando pacientes...</div>
-      ) : (
-        <form onSubmit={handleSubmit} className="form-grid">
-          {/* Paciente */}
+        <div className="form-row-2">
           <div className="form-field">
-            <label className="form-label">Paciente</label>
-            <input
-              type="text"
-              value={busquedaPaciente}
-              onChange={(e) => setBusquedaPaciente(e.target.value)}
-              placeholder="Buscar por nombre o DNI..."
-              className="form-input"
-              style={{ marginBottom: "0.4rem" }}
-            />
-            <select
-              name="paciente"
-              value={form.paciente}
-              onChange={handleChange}
-              required
-              className="form-select"
-            >
-              <option value="">Seleccionar paciente...</option>
-              {pacientesFiltrados.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.apellido}, {p.nombre} (DNI {p.dni})
-                </option>
-              ))}
-            </select>
+            <label className="form-label">Fecha</label>
+            <input type="date" name="fecha" className="form-input" value={form.fecha} onChange={handleChange} required />
           </div>
-
-          {/* Fecha + hora */}
-          <div className="form-row-2">
-            <div className="form-field">
-              <label className="form-label">Fecha</label>
-              <input
-                type="date"
-                name="fecha"
-                value={form.fecha}
-                onChange={handleChange}
-                required
-                className="form-input"
-              />
-            </div>
-            <div className="form-field">
-              <label className="form-label">Hora inicio</label>
-              <input
-                type="time"
-                name="hora_inicio"
-                value={form.hora_inicio}
-                onChange={handleChange}
-                required
-                className="form-input"
-              />
-            </div>
-          </div>
-
-          {/* Duración */}
           <div className="form-field">
-            <label className="form-label">Duración (minutos)</label>
-            <input
-              type="number"
-              name="duracion_minutos"
-              value={form.duracion_minutos}
-              onChange={handleChange}
-              min={5}
-              step={5}
-              className="form-input"
-            />
+            <label className="form-label">Hora inicio</label>
+            <input type="time" name="hora_inicio" className="form-input" value={form.hora_inicio} onChange={handleChange} required />
           </div>
+        </div>
 
-          {/* Motivo (tratamiento del catálogo) */}
-          <div className="form-field">
-            <label className="form-label">Motivo (tratamiento)</label>
-            {cargandoTratamientos ? (
-              <div>Cargando tratamientos...</div>
-            ) : (
-              <select
-                name="motivo"
-                value={form.motivo}
-                onChange={handleChange}
-                className="form-select"
-                required
-              >
-                <option value="">Seleccionar tratamiento...</option>
-                {tratamientos.map((t) => (
-                  <option key={t.id} value={t.nombre}>
-                    {t.nombre}
-                  </option>
-                ))}
-              </select>
-            )}
-          </div>
+        <div className="form-field">
+          <label className="form-label">Duración (min)</label>
+          <input type="number" name="duracion_minutos" className="form-input" value={form.duracion_minutos} onChange={handleChange} min={5} step={5} />
+        </div>
 
-          {/* Notas internas */}
-          <div className="form-field">
-            <label className="form-label">Notas internas</label>
-            <textarea
-              name="notas_internas"
-              value={form.notas_internas}
-              onChange={handleChange}
-              rows={2}
-              className="form-textarea"
-              placeholder="Ej: urgencia, dolor agudo, detalle del caso..."
-            />
-          </div>
+        <div className="form-field">
+          <label className="form-label">Motivo (tratamiento)</label>
+          <select name="motivo" className="form-select" value={form.motivo} onChange={handleChange} required>
+            <option value="">Seleccionar...</option>
+            {tratamientos.map((t) => (
+              <option key={t.id} value={t.nombre}>{t.nombre}</option>
+            ))}
+          </select>
+        </div>
 
-          {/* Botones */}
-          <div className="form-actions">
-            <button
-              type="submit"
-              disabled={guardando}
-              className="btn btn-primary"
-            >
-              {guardando ? "Guardando..." : "Guardar turno"}
-            </button>
-            <button
-              type="button"
-              onClick={() => navigate("/turnos")}
-              className="btn btn-secondary"
-            >
-              Cancelar
-            </button>
-          </div>
-        </form>
-      )}
-    </div>
+        <div className="form-field">
+          <label className="form-label">Notas internas</label>
+          <textarea name="notas_internas" className="form-textarea" value={form.notas_internas} onChange={handleChange} rows={2} />
+        </div>
+
+        <div className="form-actions">
+          <Button type="submit" variant="primary" disabled={guardando}>
+            {guardando ? 'Guardando...' : esEdicion ? 'Guardar cambios' : 'Guardar turno'}
+          </Button>
+          <Button type="button" variant="secondary" onClick={() => navigate(`/turnos?fecha=${form.fecha}`)}>
+            Cancelar
+          </Button>
+        </div>
+      </form>
+    </Card>
   );
 }
 

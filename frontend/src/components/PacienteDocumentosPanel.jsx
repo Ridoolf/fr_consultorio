@@ -1,22 +1,21 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { documentosAPI } from '../services/api';
+import { getErrorMessage } from '../utils/errors';
+import { useToast } from '../context/ToastContext';
+import Button from './ui/Button';
+import Badge from './ui/Badge';
+import Spinner from './ui/Spinner';
+import EmptyState from './ui/EmptyState';
+import ConfirmDialog from './ui/ConfirmDialog';
 
-function obtenerExtension(archivoUrl) {
-  if (!archivoUrl) return 'DOC';
-  // quita parámetros tipo ?x=...
-  const sinQuery = archivoUrl.split('?')[0];
-  const partes = sinQuery.split('.');
-  if (partes.length < 2) return 'DOC';
-  const ext = partes[partes.length - 1].toLowerCase();
-
+function obtenerExtension(url) {
+  if (!url) return 'DOC';
+  const ext = url.split('?')[0].split('.').pop()?.toLowerCase();
   if (ext === 'pdf') return 'PDF';
   if (['jpg', 'jpeg'].includes(ext)) return 'JPG';
   if (ext === 'png') return 'PNG';
-  if (['doc', 'docx'].includes(ext)) return 'DOC';
-  if (['xls', 'xlsx'].includes(ext)) return 'XLS';
-  return ext.toUpperCase();
+  return ext?.toUpperCase() || 'DOC';
 }
-
 
 function PacienteDocumentosPanel({ pacienteId }) {
   const [documentos, setDocumentos] = useState([]);
@@ -25,6 +24,10 @@ function PacienteDocumentosPanel({ pacienteId }) {
   const [titulo, setTitulo] = useState('');
   const [archivo, setArchivo] = useState(null);
   const [subiendo, setSubiendo] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(null);
+  const [accionId, setAccionId] = useState(null);
+  const fileInputRef = useRef(null);
+  const { showToast } = useToast();
 
   const cargarDocumentos = async () => {
     setCargando(true);
@@ -32,183 +35,116 @@ function PacienteDocumentosPanel({ pacienteId }) {
     try {
       const res = await documentosAPI.getByPaciente(pacienteId);
       setDocumentos(res.data);
-    } catch {
-      setError('No se pudieron cargar los documentos.');
+    } catch (err) {
+      setError(getErrorMessage(err, 'No se pudieron cargar los documentos.'));
     } finally {
       setCargando(false);
     }
   };
 
   useEffect(() => {
-    if (!pacienteId) return;
-    cargarDocumentos();
+    if (pacienteId) cargarDocumentos();
   }, [pacienteId]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!archivo || !titulo.trim()) return;
-
     setSubiendo(true);
     setError(null);
-
     const formData = new FormData();
     formData.append('paciente', pacienteId);
     formData.append('titulo', titulo.trim());
     formData.append('archivo', archivo);
-
     try {
       await documentosAPI.create(formData);
       setTitulo('');
       setArchivo(null);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      showToast('Documento subido', 'success');
       await cargarDocumentos();
-    } catch {
-      setError('No se pudo subir el archivo.');
+    } catch (err) {
+      setError(getErrorMessage(err, 'No se pudo subir el archivo.'));
     } finally {
       setSubiendo(false);
     }
   };
 
+  const handleDelete = async (docId) => {
+    setAccionId(docId);
+    try {
+      await documentosAPI.delete(docId);
+      showToast('Documento eliminado', 'success');
+      await cargarDocumentos();
+    } catch (err) {
+      showToast(getErrorMessage(err, 'No se pudo eliminar.'), 'error');
+    } finally {
+      setAccionId(null);
+      setConfirmDelete(null);
+    }
+  };
+
   return (
-    <div style={{ marginTop: '1.5rem' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-        <h3 style={{ fontSize: '1rem', marginBottom: '0.3rem', color: 'var(--color-principal)' }}>
-          Documentos del paciente
-        </h3>
-        {documentos.length > 0 && (
-          <span
-            style={{
-              fontSize: '0.75rem',
-              color: 'var(--color-texto-claro)',
-            }}
-          >
-            {documentos.length} documento{documentos.length > 1 ? 's' : ''}
-          </span>
+    <div>
+      {error && <div className="error-box">{error}</div>}
+
+      <form onSubmit={handleSubmit} className="form-grid" style={{ marginBottom: '1.5rem' }}>
+        <div className="form-field">
+          <label className="form-label">Título</label>
+          <input type="text" className="form-input" value={titulo} onChange={(e) => setTitulo(e.target.value)} placeholder="Ej: Historia clínica, Radiografía..." />
+        </div>
+        <div className="form-field">
+          <label className="form-label">Archivo (PDF, JPG, PNG — máx. 10 MB)</label>
+          <input ref={fileInputRef} type="file" className="form-input" accept=".pdf,.jpg,.jpeg,.png,.webp" onChange={(e) => setArchivo(e.target.files[0] || null)} />
+        </div>
+        {subiendo && (
+          <div className="upload-progress"><div className="upload-progress-bar" /></div>
         )}
-      </div>
-
-      {error && (
-        <div style={{ color: 'var(--color-error)', marginBottom: '0.5rem' }}>
-          {error}
-        </div>
-      )}
-
-      {/* Formulario de subida */}
-      <form onSubmit={handleSubmit} className="form-grid" style={{ marginBottom: '1rem' }}>
-        <div className="form-field">
-          <label className="form-label">Título del documento</label>
-          <input
-            type="text"
-            value={titulo}
-            onChange={(e) => setTitulo(e.target.value)}
-            className="form-input"
-            placeholder="Ej: Historia clínica firmada 2026, Foto antes, etc."
-          />
-        </div>
-        <div className="form-field">
-          <label className="form-label">Archivo</label>
-          <input
-            type="file"
-            onChange={(e) => setArchivo(e.target.files[0] || null)}
-            className="form-input"
-          />
-        </div>
-        <div className="form-actions">
-          <button
-            type="submit"
-            disabled={subiendo || !archivo || !titulo.trim()}
-            className="btn btn-primary"
-          >
-            {subiendo ? 'Subiendo...' : 'Subir documento'}
-          </button>
-        </div>
+        <Button type="submit" variant="primary" disabled={subiendo || !archivo || !titulo.trim()}>
+          {subiendo ? 'Subiendo...' : 'Subir documento'}
+        </Button>
       </form>
 
-      {/* Lista de documentos */}
       {cargando ? (
-        <div>Cargando documentos...</div>
+        <Spinner />
       ) : documentos.length === 0 ? (
-        <p>No hay documentos cargados para este paciente.</p>
+        <EmptyState icon="📄" title="Sin documentos" description="Subí el primer archivo con el formulario." />
       ) : (
-        <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'grid', gap: '0.4rem' }}>
-          {documentos.map((doc) => (
-            <li
-              key={doc.id}
-              style={{
-                padding: '0.5rem 0.75rem',
-                borderRadius: '8px',
-                backgroundColor: 'rgba(230, 192, 180, 0.2)', // usa tu color secundario suave
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                gap: '0.75rem',
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-                <div
-                  style={{
-                    width: '28px',
-                    height: '28px',
-                    borderRadius: '6px',
-                    backgroundColor: 'rgba(150, 145, 115, 0.15)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: '0.75rem',
-                    color: 'var(--color-principal)',
-                  }}
-                >
-                  {obtenerExtension(doc.archivo)}
-                </div>
+        documentos.map((doc) => (
+          <div key={doc.id} className="data-card">
+            <div className="data-card-header">
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                <span style={{ fontWeight: 700, color: 'var(--color-principal)' }}>{obtenerExtension(doc.archivo)}</span>
                 <div>
-                  <div style={{ fontSize: '0.9rem' }}>{doc.titulo}</div>
-                  <div style={{ fontSize: '0.8rem', color: 'var(--color-texto-claro)' }}>
-                    {doc.fecha}
-                  </div>
+                  <div className="data-card-title">{doc.titulo}</div>
+                  <div className="data-card-meta">{doc.fecha}</div>
                 </div>
               </div>
-              <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
-                <a
-                  href={doc.archivo}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    padding: '0.25rem 0.6rem',
-                    borderRadius: '999px',
-                    border: '1px solid rgba(150, 145, 115, 0.4)',
-                    fontSize: '0.8rem',
-                    color: 'var(--color-principal)',
-                    textDecoration: 'none',
-                    backgroundColor: 'rgba(255,255,255,0.7)',
-                    whiteSpace: 'nowrap',
-                  }}
-                >
-                  Ver / descargar
+              {!doc.archivo_disponible && <Badge variant="warning">Re-subir archivo</Badge>}
+            </div>
+            <div className="data-card-actions">
+              {doc.archivo_disponible ? (
+                <a href={doc.archivo} target="_blank" rel="noopener noreferrer">
+                  <Button size="sm" variant="primary">Ver / descargar</Button>
                 </a>
-                <button
-                  type="button"
-                  onClick={async () => {
-                    const ok = window.confirm('¿Eliminar este documento?');
-                    if (!ok) return;
-                    await documentosAPI.delete(doc.id);
-                    await cargarDocumentos();
-                  }}
-                  className="btn btn-secondary"
-                  style={{
-                    padding: '0.25rem 0.6rem',
-                    fontSize: '0.75rem',
-                    borderRadius: '999px',
-                  }}
-                >
-                  Eliminar
-                </button>
-              </div>
-
-            </li>
-          ))}
-        </ul>
+              ) : (
+                <span className="data-card-meta">Archivo no disponible — volvé a subirlo</span>
+              )}
+              <Button size="sm" variant="danger" disabled={accionId === doc.id} onClick={() => setConfirmDelete(doc)}>
+                Eliminar
+              </Button>
+            </div>
+          </div>
+        ))
       )}
+
+      <ConfirmDialog
+        open={Boolean(confirmDelete)}
+        title="Eliminar documento"
+        message={`¿Eliminar "${confirmDelete?.titulo}"?`}
+        danger
+        onCancel={() => setConfirmDelete(null)}
+        onConfirm={() => confirmDelete && handleDelete(confirmDelete.id)}
+      />
     </div>
   );
 }

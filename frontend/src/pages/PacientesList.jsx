@@ -1,11 +1,21 @@
-import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { pacientesAPI } from "../services/api";
+import { useEffect, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
+import { pacientesAPI } from '../services/api';
+import { getErrorMessage } from '../utils/errors';
+import { useToast } from '../context/ToastContext';
+import Card from '../components/ui/Card';
+import PageHeader from '../components/ui/PageHeader';
+import Button from '../components/ui/Button';
+import Badge from '../components/ui/Badge';
+import Spinner from '../components/ui/Spinner';
+import EmptyState from '../components/ui/EmptyState';
+import ConfirmDialog from '../components/ui/ConfirmDialog';
 
 const initialFilters = {
   incluirInactivos: false,
-  search: "",
-  ordering: "apellido", // valor por defecto
+  search: '',
+  ordering: 'apellido',
 };
 
 function PacientesList() {
@@ -13,298 +23,185 @@ function PacientesList() {
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState(null);
   const [filters, setFilters] = useState(initialFilters);
+  const [accionId, setAccionId] = useState(null);
+  const [confirm, setConfirm] = useState(null);
   const navigate = useNavigate();
+  const { showToast } = useToast();
 
-  // 👇 Función única para pedir al backend con filtros
   const cargarPacientes = async (f = filters) => {
     setCargando(true);
     setError(null);
-
     try {
       const params = {};
-
-      // Estado activo/inactivo
-      if (f.incluirInactivos) {
-        params.activos = "false"; // backend: muestra todos
-      }
-
-      // Búsqueda
-      if (f.search && f.search.trim() !== "") {
-        params.search = f.search.trim();
-      }
-
-      // Orden
-      if (f.ordering) {
-        params.ordering = f.ordering;
-      }
-
+      if (f.incluirInactivos) params.activos = 'false';
+      if (f.search?.trim()) params.search = f.search.trim();
+      if (f.ordering) params.ordering = f.ordering;
       const res = await pacientesAPI.getAll(params);
       setPacientes(res.data);
-    } catch {
-      setError("No se pudieron cargar los pacientes.");
+    } catch (err) {
+      setError(getErrorMessage(err, 'No se pudieron cargar los pacientes.'));
     } finally {
       setCargando(false);
     }
   };
 
-  // Efecto: cargar cuando cambian filtros
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     cargarPacientes(filters);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filters.incluirInactivos, filters.ordering]);
 
-  // Búsqueda: la hacemos manual al presionar Enter o botón “Buscar”
   const handleSearchSubmit = (e) => {
     e.preventDefault();
     cargarPacientes(filters);
   };
 
-  const handleChangeFilter = (field, value) => {
-    setFilters((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
+  const handleToggleActivo = async (p) => {
+    setAccionId(p.id);
+    try {
+      if (p.activo) {
+        await pacientesAPI.desactivar(p.id);
+        showToast('Paciente desactivado', 'success');
+      } else {
+        await pacientesAPI.activar(p.id);
+        showToast('Paciente activado', 'success');
+      }
+      await cargarPacientes(filters);
+    } catch (err) {
+      showToast(getErrorMessage(err, 'No se pudo actualizar el paciente.'), 'error');
+    } finally {
+      setAccionId(null);
+      setConfirm(null);
+    }
   };
 
-  if (cargando) return <div>Cargando pacientes...</div>;
-  if (error) return <div style={{ color: "var(--color-error)" }}>{error}</div>;
-
   return (
-    <div className="card">
-      {/* Header: título + botón nuevo */}
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          marginBottom: "0.75rem",
-        }}
-      >
-        <div className="card-title">Pacientes</div>
-        <button
-          onClick={() => navigate("/pacientes/nuevo")}
-          style={{
-            padding: "0.4rem 0.8rem",
-            borderRadius: "6px",
-            border: "none",
-            backgroundColor: "var(--color-secundario)",
-            color: "var(--color-texto)",
-            cursor: "pointer",
-            fontSize: "0.85rem",
-          }}
-        >
-          + Nuevo paciente
-        </button>
-      </div>
+    <Card>
+      <PageHeader
+        title="Pacientes"
+        subtitle={`${pacientes.length} registro${pacientes.length !== 1 ? 's' : ''}`}
+        action={
+          <Button variant="primary" onClick={() => navigate('/pacientes/nuevo')}>
+            + Nuevo paciente
+          </Button>
+        }
+      />
 
-      {/* Filtros */}
-      <form
-        onSubmit={handleSearchSubmit}
-        style={{
-          display: "flex",
-          flexWrap: "wrap",
-          gap: "0.75rem",
-          marginBottom: "0.75rem",
-          alignItems: "center",
-          backgroundColor: "#f7ede4",
-          padding: "0.75rem",
-          borderRadius: "8px",
-        }}
-      >
-        {/* Búsqueda */}
-        <div style={{ flex: "1 1 200px" }}>
-          <label
-            style={{
-              display: "block",
-              fontSize: "0.8rem",
-              marginBottom: "0.25rem",
-              color: "var(--color-texto-claro)",
-            }}
-          >
-            Buscar (nombre, apellido, DNI, teléfono)
-          </label>
+      <form onSubmit={handleSearchSubmit} className="filters-bar">
+        <div className="form-field" style={{ flex: '1 1 200px' }}>
+          <label className="form-label">Buscar</label>
           <input
-            type="text"
+            type="search"
+            className="form-input"
             value={filters.search}
-            onChange={(e) => handleChangeFilter("search", e.target.value)}
-            placeholder="Ej: Pérez, 12345678..."
-            style={{
-              width: "100%",
-              padding: "0.4rem",
-              borderRadius: "6px",
-              border: "1px solid #ccc",
-              fontSize: "0.85rem",
-            }}
+            onChange={(e) => setFilters((p) => ({ ...p, search: e.target.value }))}
+            placeholder="Nombre, apellido, DNI..."
           />
         </div>
-
-        {/* Orden */}
-        <div style={{ flex: "0 0 200px" }}>
-          <label
-            style={{
-              display: "block",
-              fontSize: "0.8rem",
-              marginBottom: "0.25rem",
-              color: "var(--color-texto-claro)",
-            }}
-          >
-            Ordenar por
-          </label>
+        <div className="form-field" style={{ flex: '0 0 180px' }}>
+          <label className="form-label">Ordenar</label>
           <select
+            className="form-select"
             value={filters.ordering}
-            onChange={(e) => handleChangeFilter("ordering", e.target.value)}
-            style={{
-              width: "100%",
-              padding: "0.4rem",
-              borderRadius: "6px",
-              border: "1px solid #ccc",
-              fontSize: "0.85rem",
-              backgroundColor: "white",
-            }}
+            onChange={(e) => setFilters((p) => ({ ...p, ordering: e.target.value }))}
           >
-            <option value="apellido">Apellido (A-Z)</option>
-            <option value="-apellido">Apellido (Z-A)</option>
-            <option value="-fecha_registro">Más nuevo primero</option>
-            <option value="fecha_registro">Más antiguo primero</option>
+            <option value="apellido">Apellido A-Z</option>
+            <option value="-apellido">Apellido Z-A</option>
+            <option value="-fecha_registro">Más nuevo</option>
+            <option value="fecha_registro">Más antiguo</option>
           </select>
         </div>
-
-        {/* Activos / inactivos */}
-        <div style={{ flex: "0 0 auto" }}>
-          <label
-            style={{
-              fontSize: "0.8rem",
-              color: "var(--color-texto-claro)",
-            }}
-          >
-            <input
-              type="checkbox"
-              checked={filters.incluirInactivos}
-              onChange={(e) =>
-                handleChangeFilter("incluirInactivos", e.target.checked)
-              }
-              style={{ marginRight: "0.3rem" }}
-            />
-            Incluir inactivos
-          </label>
-        </div>
-
-        {/* Botón buscar (ejecuta el submit del form) */}
-        <div style={{ flex: "0 0 auto", marginLeft: "auto" }}>
-          <button
-            type="submit"
-            style={{
-              padding: "0.45rem 1rem",
-              borderRadius: "6px",
-              border: "none",
-              backgroundColor: "var(--color-principal)",
-              color: "white",
-              cursor: "pointer",
-              fontSize: "0.85rem",
-            }}
-          >
-            Buscar
-          </button>
-        </div>
+        <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', minHeight: 44 }}>
+          <input
+            type="checkbox"
+            checked={filters.incluirInactivos}
+            onChange={(e) => setFilters((p) => ({ ...p, incluirInactivos: e.target.checked }))}
+          />
+          Incluir inactivos
+        </label>
+        <Button type="submit" variant="primary">Buscar</Button>
       </form>
 
-      {/* Tabla */}
-      {pacientes.length === 0 ? (
-        <p>No se encontraron pacientes con esos filtros.</p>
-      ) : (
-        <table className="table">
-          <thead>
-            <tr>
-              <th>Apellido y nombre</th>
-              <th>DNI</th>
-              <th>Teléfono</th>
-              <th>Estado</th>
-              <th style={{ width: "210px" }}></th>
-            </tr>
-          </thead>
-          <tbody>
-            {pacientes.map((p) => (
-              <tr key={p.id}>
-                <td>
-                  {p.apellido}, {p.nombre}
-                </td>
-                <td>{p.dni}</td>
-                <td>{p.telefono || "-"}</td>
-                <td>
-                  <span
-                    className={`badge ${p.activo ? "badge-activo" : "badge-inactivo"}`}
+      {error && <div className="error-box">{error}</div>}
+
+      <div className={`loading-overlay${cargando ? ' is-loading' : ''}`}>
+        {cargando && pacientes.length === 0 ? (
+          <Spinner />
+        ) : pacientes.length === 0 ? (
+          <EmptyState
+            icon="👤"
+            title="Sin pacientes"
+            description="No hay pacientes con esos filtros."
+            action={
+              <Button variant="primary" onClick={() => navigate('/pacientes/nuevo')}>
+                Crear primer paciente
+              </Button>
+            }
+          />
+        ) : (
+          <div>
+            {pacientes.map((p, i) => (
+              <motion.div
+                key={p.id}
+                className="data-card"
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.04 }}
+              >
+                <div className="data-card-header">
+                  <div>
+                    <div className="data-card-title">
+                      {p.apellido}, {p.nombre}
+                    </div>
+                    <div className="data-card-meta">
+                      DNI {p.dni}
+                      {p.telefono && ` · ${p.telefono}`}
+                      {p.edad != null && ` · ${p.edad} años`}
+                    </div>
+                  </div>
+                  <Badge variant={p.activo ? 'activo' : 'inactivo'}>
+                    {p.activo ? 'Activo' : 'Inactivo'}
+                  </Badge>
+                </div>
+                <div className="data-card-actions">
+                  <Button variant="primary" size="sm" onClick={() => navigate(`/pacientes/${p.id}`)}>
+                    Ver ficha
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    disabled={accionId === p.id}
+                    onClick={() =>
+                      setConfirm({
+                        paciente: p,
+                        title: p.activo ? 'Desactivar paciente' : 'Activar paciente',
+                        message: `¿${p.activo ? 'Desactivar' : 'Activar'} a ${p.apellido}, ${p.nombre}?`,
+                      })
+                    }
                   >
-                    {p.activo ? "Activo" : "Inactivo"}
-                  </span>
-                </td>
-                <td style={{ display: "flex", gap: "0.3rem" }}>
-                  <button
-                    onClick={() => navigate(`/pacientes/${p.id}`)}
-                    style={{
-                      padding: "0.25rem 0.6rem",
-                      borderRadius: "6px",
-                      border: "1px solid #ccc",
-                      backgroundColor: "white",
-                      fontSize: "0.8rem",
-                      cursor: "pointer",
-                      whiteSpace: "nowrap"
-                    }}
-                  >
-                    Ver / editar
-                  </button>
-                  <button
-                    onClick={async () => {
-                      const confirmar = window.confirm(
-                        `¿Seguro que querés ${p.activo ? "desactivar" : "activar"} a este paciente?`,
-                      );
-                      if (!confirmar) return;
-                      if (p.activo) {
-                        await pacientesAPI.desactivar(p.id);
-                      } else {
-                        await pacientesAPI.activar(p.id);
-                      }
-                      await cargarPacientes(filters);
-                    }}
-                    style={{
-                      padding: "0.25rem 0.6rem",
-                      borderRadius: "6px",
-                      border: "1px solid #ccc",
-                      backgroundColor: "#fdf5f3",
-                      fontSize: "0.8rem",
-                      cursor: "pointer",
-                    }}
-                  >
-                    {p.activo ? "Desactivar" : "Activar"}
-                  </button>
-                  <button
-                    onClick={async () => {
-                      const confirmar = window.confirm(
-                        "¿Seguro que querés eliminar este paciente?",
-                      );
-                      if (!confirmar) return;
-                      await pacientesAPI.delete(p.id);
-                      setPacientes((prev) => prev.filter((x) => x.id !== p.id));
-                    }}
-                    style={{
-                      padding: "0.25rem 0.6rem",
-                      borderRadius: "6px",
-                      border: "1px solid #d9534f",
-                      backgroundColor: "#ffeceb",
-                      color: "#a13835",
-                      fontSize: "0.8rem",
-                      cursor: "pointer",
-                    }}
-                  >
-                    Eliminar
-                  </button>
-                </td>
-              </tr>
+                    {p.activo ? 'Desactivar' : 'Activar'}
+                  </Button>
+                </div>
+              </motion.div>
             ))}
-          </tbody>
-        </table>
-      )}
-    </div>
+          </div>
+        )}
+        {cargando && pacientes.length > 0 && (
+          <div style={{ textAlign: 'center', padding: '1rem' }}>
+            <Spinner label="" />
+          </div>
+        )}
+      </div>
+
+      <ConfirmDialog
+        open={Boolean(confirm)}
+        title={confirm?.title}
+        message={confirm?.message}
+        confirmLabel={confirm?.paciente?.activo ? 'Desactivar' : 'Activar'}
+        danger={confirm?.paciente?.activo}
+        onCancel={() => setConfirm(null)}
+        onConfirm={() => confirm && handleToggleActivo(confirm.paciente)}
+      />
+    </Card>
   );
 }
 

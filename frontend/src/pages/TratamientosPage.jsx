@@ -1,5 +1,15 @@
 import { useEffect, useState } from 'react';
+import { motion } from 'framer-motion';
 import { tratamientosAPI } from '../services/api';
+import { getErrorMessage } from '../utils/errors';
+import { useToast } from '../context/ToastContext';
+import Card from '../components/ui/Card';
+import PageHeader from '../components/ui/PageHeader';
+import Button from '../components/ui/Button';
+import Badge from '../components/ui/Badge';
+import Spinner from '../components/ui/Spinner';
+import EmptyState from '../components/ui/EmptyState';
+import ConfirmDialog from '../components/ui/ConfirmDialog';
 
 function TratamientosPage() {
   const [tratamientos, setTratamientos] = useState([]);
@@ -7,6 +17,8 @@ function TratamientosPage() {
   const [error, setError] = useState(null);
   const [form, setForm] = useState({ id: null, nombre: '', precio_base: '' });
   const [guardando, setGuardando] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(null);
+  const { showToast } = useToast();
 
   const cargarTratamientos = async () => {
     setCargando(true);
@@ -14,182 +26,121 @@ function TratamientosPage() {
     try {
       const res = await tratamientosAPI.getAll();
       setTratamientos(res.data);
-    } catch {
-      setError('No se pudieron cargar los tratamientos.');
+    } catch (err) {
+      setError(getErrorMessage(err, 'No se pudieron cargar los tratamientos.'));
     } finally {
       setCargando(false);
     }
   };
 
-  useEffect(() => {
-    cargarTratamientos();
-  }, []);
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setForm((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const editar = (t) => {
-    setForm({
-      id: t.id,
-      nombre: t.nombre,
-      precio_base: String(t.precio_base),
-    });
-  };
-
-  const resetForm = () => {
-    setForm({ id: null, nombre: '', precio_base: '' });
-  };
+  useEffect(() => { cargarTratamientos(); }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!form.nombre.trim() || !form.precio_base) return;
+    if (!form.nombre.trim() || !form.precio_base) {
+      setError('Completá nombre y precio.');
+      return;
+    }
     setGuardando(true);
     setError(null);
     try {
-      const payload = {
-        nombre: form.nombre.trim(),
-        precio_base: form.precio_base,
-        activo: true,
-      };
+      const payload = { nombre: form.nombre.trim(), precio_base: form.precio_base, activo: true };
       if (form.id) {
         await tratamientosAPI.update(form.id, payload);
+        showToast('Tratamiento actualizado', 'success');
       } else {
         await tratamientosAPI.create(payload);
+        showToast('Tratamiento creado', 'success');
       }
-      resetForm();
+      setForm({ id: null, nombre: '', precio_base: '' });
       await cargarTratamientos();
-    } catch {
-      setError('No se pudo guardar el tratamiento.');
+    } catch (err) {
+      setError(getErrorMessage(err, 'No se pudo guardar.'));
     } finally {
       setGuardando(false);
     }
   };
 
+  const handleDelete = async (t) => {
+    try {
+      await tratamientosAPI.delete(t.id);
+      showToast('Tratamiento eliminado', 'success');
+      if (form.id === t.id) setForm({ id: null, nombre: '', precio_base: '' });
+      await cargarTratamientos();
+    } catch (err) {
+      showToast(getErrorMessage(err, 'No se pudo eliminar (puede estar en uso).'), 'error');
+    } finally {
+      setConfirmDelete(null);
+    }
+  };
+
   return (
-    <div className="card">
-      <div className="card-title">Tratamientos</div>
+    <Card>
+      <PageHeader title="Tratamientos" subtitle="Catálogo de prestaciones" />
 
-      {error && (
-        <div style={{ color: 'var(--color-error)', marginBottom: '0.5rem' }}>
-          {error}
-        </div>
-      )}
+      {error && <div className="error-box">{error}</div>}
 
-      {/* Formulario alta/edición */}
-      <form onSubmit={handleSubmit} className="form-grid" style={{ marginBottom: '1rem' }}>
+      <form onSubmit={handleSubmit} className="form-grid" style={{ marginBottom: '1.5rem' }}>
         <div className="form-row-2">
           <div className="form-field">
-            <label className="form-label">Nombre del tratamiento</label>
-            <input
-              type="text"
-              name="nombre"
-              value={form.nombre}
-              onChange={handleChange}
-              className="form-input"
-              placeholder="Ej: Blanqueamiento maxilar, Limpieza, etc."
-            />
+            <label className="form-label">Nombre</label>
+            <input type="text" name="nombre" className="form-input" value={form.nombre} onChange={(e) => setForm((p) => ({ ...p, nombre: e.target.value }))} placeholder="Ej: Limpieza, Blanqueamiento..." />
           </div>
           <div className="form-field">
             <label className="form-label">Precio base</label>
-            <input
-              type="number"
-              name="precio_base"
-              value={form.precio_base}
-              onChange={handleChange}
-              className="form-input"
-              min="0"
-              step="50"
-            />
+            <input type="number" name="precio_base" className="form-input" value={form.precio_base} onChange={(e) => setForm((p) => ({ ...p, precio_base: e.target.value }))} min="0" step="50" />
           </div>
         </div>
         <div className="form-actions">
-          <button
-            type="submit"
-            disabled={guardando}
-            className="btn btn-primary"
-          >
-            {guardando
-              ? 'Guardando...'
-              : form.id
-              ? 'Guardar cambios'
-              : 'Agregar tratamiento'}
-          </button>
+          <Button type="submit" variant="primary" disabled={guardando}>
+            {guardando ? 'Guardando...' : form.id ? 'Guardar cambios' : 'Agregar'}
+          </Button>
           {form.id && (
-            <button
-              type="button"
-              onClick={resetForm}
-              className="btn btn-secondary"
-            >
-              Cancelar edición
-            </button>
+            <Button type="button" variant="secondary" onClick={() => setForm({ id: null, nombre: '', precio_base: '' })}>
+              Cancelar
+            </Button>
           )}
         </div>
       </form>
 
-            {/* Lista */}
       {cargando ? (
-        <div>Cargando tratamientos...</div>
+        <Spinner />
       ) : tratamientos.length === 0 ? (
-        <p>No hay tratamientos cargados aún.</p>
+        <EmptyState icon="🦷" title="Sin tratamientos" description="Agregá el primero con el formulario de arriba." />
       ) : (
-        <table className="table">
-          <thead>
-            <tr>
-              <th>Nombre</th>
-              <th>Precio base</th>
-              <th style={{ width: '150px' }}></th>
-            </tr>
-          </thead>
-          <tbody>
-            {tratamientos.map((t) => (
-              <tr key={t.id}>
-                <td>{t.nombre}</td>
-                <td>${Number(t.precio_base).toLocaleString('es-AR')}</td>
-                <td style={{ display: 'flex', gap: '0.3rem' }}>
-                  <button
-                    type="button"
-                    onClick={() => editar(t)}
-                    className="btn btn-secondary"
-                    style={{ padding: '0.25rem 0.6rem', fontSize: '0.8rem' }}
-                  >
-                    Editar
-                  </button>
-                  <button
-                    type="button"
-                    onClick={async () => {
-                      const ok = window.confirm(
-                        `¿Eliminar el tratamiento "${t.nombre}"?`
-                      );
-                      if (!ok) return;
-                      try {
-                        await tratamientosAPI.delete(t.id);
-                        await cargarTratamientos();
-                        // si lo estaba editando, limpiamos el form
-                        if (form.id === t.id) resetForm();
-                      } catch {
-                        alert('No se pudo eliminar el tratamiento (puede estar usado en algún pago).');
-                      }
-                    }}
-                    className="btn btn-secondary"
-                    style={{
-                      padding: '0.25rem 0.6rem',
-                      fontSize: '0.8rem',
-                      borderColor: '#d9534f',
-                      color: '#a13835',
-                    }}
-                  >
-                    Eliminar
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        tratamientos.map((t, i) => (
+          <motion.div key={t.id} className="data-card" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }}>
+            <div className="data-card-header">
+              <div>
+                <div className="data-card-title">{t.nombre}</div>
+                <div className="data-card-meta" style={{ fontSize: '1.1rem', fontWeight: 600, color: 'var(--color-principal)', marginTop: '0.25rem' }}>
+                  ${Number(t.precio_base).toLocaleString('es-AR')}
+                </div>
+              </div>
+              {!t.activo && <Badge variant="warning">Inactivo</Badge>}
+            </div>
+            <div className="data-card-actions">
+              <Button size="sm" variant="secondary" onClick={() => setForm({ id: t.id, nombre: t.nombre, precio_base: String(t.precio_base) })}>
+                Editar
+              </Button>
+              <Button size="sm" variant="danger" onClick={() => setConfirmDelete(t)}>
+                Eliminar
+              </Button>
+            </div>
+          </motion.div>
+        ))
       )}
 
-    </div>
+      <ConfirmDialog
+        open={Boolean(confirmDelete)}
+        title="Eliminar tratamiento"
+        message={`¿Eliminar "${confirmDelete?.nombre}"?`}
+        danger
+        confirmLabel="Eliminar"
+        onCancel={() => setConfirmDelete(null)}
+        onConfirm={() => confirmDelete && handleDelete(confirmDelete)}
+      />
+    </Card>
   );
 }
 

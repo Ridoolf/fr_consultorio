@@ -27,6 +27,7 @@ class Paciente(models.Model):
     def __str__(self):
         return f"{self.apellido}, {self.nombre} - DNI: {self.dni}"
     
+    @property
     def edad(self):
         from datetime import date
         hoy = date.today()
