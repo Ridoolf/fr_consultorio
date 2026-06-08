@@ -1,264 +1,59 @@
-import { useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { turnosAPI, pagosAPI } from '../services/api';
-import { getErrorMessage } from '../utils/errors';
-import { useToast } from '../context/ToastContext';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import { hoyLocal, formatoFechaLindo } from '../utils/fechas';
+import { nombreParaSaludo, fraseDelDia } from '../utils/frasesMotivacionales';
 import Card from '../components/ui/Card';
 import PageHeader from '../components/ui/PageHeader';
-import Button from '../components/ui/Button';
-import Badge from '../components/ui/Badge';
-import Spinner from '../components/ui/Spinner';
-import EmptyState from '../components/ui/EmptyState';
-import ConfirmDialog from '../components/ui/ConfirmDialog';
 
 function HomePage() {
   const hoy = hoyLocal();
   const navigate = useNavigate();
-  const { showToast } = useToast();
-
-  const [turnos, setTurnos] = useState([]);
-  const [pagos, setPagos] = useState([]);
-  const [cargando, setCargando] = useState(true);
-  const [error, setError] = useState(null);
-  const [accionId, setAccionId] = useState(null);
-  const [confirm, setConfirm] = useState(null);
-
-  const cargarDatos = async () => {
-    setCargando(true);
-    setError(null);
-    try {
-      const [turnosRes, pagosRes] = await Promise.all([
-        turnosAPI.getAll({ fecha: hoy }),
-        pagosAPI.getAll({ fecha: hoy }),
-      ]);
-      setTurnos(turnosRes.data);
-      setPagos(pagosRes.data);
-    } catch (err) {
-      setError(getErrorMessage(err, 'No se pudieron cargar los datos del día.'));
-    } finally {
-      setCargando(false);
-    }
-  };
-
-  useEffect(() => {
-    cargarDatos();
-  }, []);
-
-  const ejecutarAccion = async (id, accion) => {
-    setAccionId(id);
-    try {
-      if (accion === 'confirmar') await turnosAPI.confirmar(id);
-      if (accion === 'realizado') await turnosAPI.marcarRealizado(id);
-      if (accion === 'cancelar') await turnosAPI.cancelar(id);
-      showToast('Turno actualizado', 'success');
-      await cargarDatos();
-    } catch (err) {
-      showToast(getErrorMessage(err, 'No se pudo actualizar el turno.'), 'error');
-    } finally {
-      setAccionId(null);
-      setConfirm(null);
-    }
-  };
-
-  const turnosActivos = turnos.filter((t) => t.estado !== 'cancelado');
-  const pendientes = turnos.filter((t) => t.estado === 'pendiente').length;
-  const confirmados = turnos.filter((t) => t.estado === 'confirmado').length;
-  const totalCobrado = pagos.reduce((sum, p) => sum + Number(p.monto_total || 0), 0);
-  const ultimosPagos = pagos.slice(0, 3);
+  const { user } = useAuth();
+  const nombre = nombreParaSaludo(user?.username);
 
   return (
     <Card>
       <PageHeader title="Inicio" subtitle={formatoFechaLindo(hoy)} />
 
-      {error && <div className="error-box">{error}</div>}
+      <div className="home-welcome">
+        {nombre && <p className="home-greeting">Hola, {nombre}</p>}
+        <p className="home-frase">{fraseDelDia()}</p>
+      </div>
 
-      {cargando ? (
-        <Spinner label="Cargando resumen..." />
-      ) : (
-        <>
-          <div className="home-stats">
-            <div className="home-stat">
-              <span className="home-stat-value">{turnosActivos.length}</span>
-              <span className="home-stat-label">Turnos hoy</span>
-            </div>
-            <div className="home-stat">
-              <span className="home-stat-value">{pendientes + confirmados}</span>
-              <span className="home-stat-label">
-                {pendientes > 0 ? `${pendientes} pend.` : 'Sin pendientes'}
-              </span>
-            </div>
-            <div className="home-stat">
-              <span className="home-stat-value home-stat-value--money">
-                ${totalCobrado.toLocaleString('es-AR')}
-              </span>
-              <span className="home-stat-label">Cobrado hoy</span>
-            </div>
-          </div>
-
-          <div className="home-quick-actions">
-            <button
-              type="button"
-              className="home-quick-action"
-              onClick={() => navigate(`/turnos/nuevo?fecha=${hoy}`)}
-            >
-              <span className="home-quick-action-icon">+</span>
-              <span className="home-quick-action-label">Nuevo turno</span>
-            </button>
-            <button
-              type="button"
-              className="home-quick-action"
-              onClick={() => navigate('/caja')}
-            >
-              <span className="home-quick-action-icon">💰</span>
-              <span className="home-quick-action-label">Registrar cobro</span>
-            </button>
-            <button
-              type="button"
-              className="home-quick-action"
-              onClick={() => navigate('/pacientes')}
-            >
-              <span className="home-quick-action-icon">👤</span>
-              <span className="home-quick-action-label">Pacientes</span>
-            </button>
-            <button
-              type="button"
-              className="home-quick-action"
-              onClick={() => navigate('/turnos')}
-            >
-              <span className="home-quick-action-icon">📅</span>
-              <span className="home-quick-action-label">Ver agenda</span>
-            </button>
-          </div>
-
-          <section className="home-section">
-            <div className="home-section-header">
-              <h2 className="home-section-title">Turnos de hoy</h2>
-              {turnosActivos.length > 0 && (
-                <Link to="/turnos" className="home-section-link">
-                  Ver agenda completa →
-                </Link>
-              )}
-            </div>
-
-            {turnosActivos.length === 0 ? (
-              <EmptyState
-                icon="📅"
-                title="Sin turnos hoy"
-                description="No hay turnos programados para hoy."
-                action={
-                  <Button variant="primary" onClick={() => navigate(`/turnos/nuevo?fecha=${hoy}`)}>
-                    + Nuevo turno
-                  </Button>
-                }
-              />
-            ) : (
-              <div>
-                {turnosActivos.map((t, i) => (
-                  <motion.div
-                    key={t.id}
-                    className="turno-card"
-                    initial={{ opacity: 0, x: -8 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: i * 0.05 }}
-                  >
-                    <div className="turno-hora">
-                      {t.hora_inicio?.slice(0, 5)}
-                      <div className="turno-hora-fin">
-                        {t.hora_fin?.slice(0, 5)}
-                      </div>
-                    </div>
-                    <div className="home-turno-body">
-                      <div className="data-card-header">
-                        <Link to={`/pacientes/${t.paciente}`} className="data-card-title">
-                          {t.paciente_nombre_completo}
-                        </Link>
-                        <Badge estado={t.estado} />
-                      </div>
-                      <div className="data-card-meta">{t.motivo || 'Sin motivo'}</div>
-                      <div className="data-card-actions">
-                        {t.estado === 'pendiente' && (
-                          <Button
-                            size="sm"
-                            variant="primary"
-                            disabled={accionId === t.id}
-                            onClick={() => ejecutarAccion(t.id, 'confirmar')}
-                          >
-                            Confirmar
-                          </Button>
-                        )}
-                        {t.estado !== 'realizado' && t.estado !== 'cancelado' && (
-                          <Button
-                            size="sm"
-                            variant="secondary"
-                            disabled={accionId === t.id}
-                            onClick={() =>
-                              setConfirm({
-                                id: t.id,
-                                accion: 'realizado',
-                                title: 'Marcar realizado',
-                                message: '¿Marcar este turno como realizado?',
-                              })
-                            }
-                          >
-                            Realizado
-                          </Button>
-                        )}
-                      </div>
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
-            )}
-          </section>
-
-          <section className="home-section">
-            <div className="home-section-header">
-              <h2 className="home-section-title">Cobros de hoy</h2>
-              <Link to="/caja" className="home-section-link">
-                Ver caja →
-              </Link>
-            </div>
-
-            {pagos.length === 0 ? (
-              <p className="home-empty-hint">Todavía no hay cobros registrados hoy.</p>
-            ) : (
-              <>
-                {ultimosPagos.map((p) => (
-                  <div key={p.id} className="data-card home-pago-card">
-                    <div className="data-card-header">
-                      <Link to={`/pacientes/${p.paciente}`} className="data-card-title">
-                        {p.paciente_nombre_completo}
-                      </Link>
-                      <strong className="home-pago-monto">
-                        ${Number(p.monto_total).toLocaleString('es-AR')}
-                      </strong>
-                    </div>
-                    <div className="data-card-meta">
-                      {p.items?.[0]?.tratamiento_nombre || '-'} · {p.medio}
-                    </div>
-                  </div>
-                ))}
-                {pagos.length > 3 && (
-                  <p className="home-empty-hint">
-                    y {pagos.length - 3} cobro{pagos.length - 3 > 1 ? 's' : ''} más
-                  </p>
-                )}
-              </>
-            )}
-          </section>
-        </>
-      )}
-
-      <ConfirmDialog
-        open={Boolean(confirm)}
-        title={confirm?.title}
-        message={confirm?.message}
-        danger={confirm?.danger}
-        onCancel={() => setConfirm(null)}
-        onConfirm={() => confirm && ejecutarAccion(confirm.id, confirm.accion)}
-      />
+      <div className="home-quick-actions">
+        <button
+          type="button"
+          className="home-quick-action"
+          onClick={() => navigate(`/turnos/nuevo?fecha=${hoy}`)}
+        >
+          <span className="home-quick-action-icon">+</span>
+          <span className="home-quick-action-label">Nuevo turno</span>
+        </button>
+        <button
+          type="button"
+          className="home-quick-action"
+          onClick={() => navigate('/caja')}
+        >
+          <span className="home-quick-action-icon">💰</span>
+          <span className="home-quick-action-label">Registrar cobro</span>
+        </button>
+        <button
+          type="button"
+          className="home-quick-action"
+          onClick={() => navigate('/pacientes')}
+        >
+          <span className="home-quick-action-icon">👤</span>
+          <span className="home-quick-action-label">Pacientes</span>
+        </button>
+        <button
+          type="button"
+          className="home-quick-action"
+          onClick={() => navigate('/turnos')}
+        >
+          <span className="home-quick-action-icon">📅</span>
+          <span className="home-quick-action-label">Ver agenda</span>
+        </button>
+      </div>
     </Card>
   );
 }
