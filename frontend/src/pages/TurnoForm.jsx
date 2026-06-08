@@ -9,6 +9,8 @@ import PageHeader from '../components/ui/PageHeader';
 import Button from '../components/ui/Button';
 import Spinner from '../components/ui/Spinner';
 import PacienteCombobox from '../components/ui/PacienteCombobox';
+import TimeInput24 from '../components/ui/TimeInput24';
+import { normalizarHora } from '../utils/hora';
 
 const initialForm = {
   paciente: '',
@@ -86,10 +88,19 @@ function TurnoForm() {
       setError('Seleccioná un paciente.');
       return;
     }
+    const horaNormalizada = normalizarHora(form.hora_inicio);
+    if (!horaNormalizada) {
+      setError('La hora no es válida. Usá formato 24 h (ej: 17:30 o 1730).');
+      return;
+    }
     setGuardando(true);
     setError(null);
     try {
-      const payload = { ...form, paciente: Number(form.paciente) };
+      const payload = {
+        ...form,
+        paciente: Number(form.paciente),
+        hora_inicio: horaNormalizada,
+      };
       if (esEdicion) {
         await turnosAPI.update(id, payload);
         showToast('Turno actualizado', 'success');
@@ -127,10 +138,12 @@ function TurnoForm() {
             <label className="form-label">Fecha</label>
             <input type="date" name="fecha" className="form-input" value={form.fecha} onChange={handleChange} required />
           </div>
-          <div className="form-field">
-            <label className="form-label">Hora inicio</label>
-            <input type="time" name="hora_inicio" className="form-input" value={form.hora_inicio} onChange={handleChange} required />
-          </div>
+          <TimeInput24
+            name="hora_inicio"
+            value={form.hora_inicio}
+            onChange={(v) => setForm((prev) => ({ ...prev, hora_inicio: v }))}
+            required
+          />
         </div>
 
         <div className="form-field">

@@ -297,6 +297,26 @@ a:hover {
   color: var(--color-texto-claro);
 }
 
+.form-hint-inline {
+  font-weight: 400;
+  font-size: 0.8rem;
+  color: var(--color-texto-claro);
+}
+
+.form-hint {
+  font-size: 0.75rem;
+  color: var(--color-texto-claro);
+}
+
+.form-field-error {
+  font-size: 0.75rem;
+  color: var(--color-error);
+}
+
+.form-input-error {
+  border-color: var(--color-error);
+}
+
 .form-input,
 .form-textarea,
 .form-select {
