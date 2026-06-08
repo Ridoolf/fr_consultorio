@@ -4,7 +4,14 @@ function etiquetaPaciente(p) {
   return `${p.apellido}, ${p.nombre} (DNI ${p.dni})`;
 }
 
-function PacienteCombobox({ pacientes, value, onChange, required, label = 'Paciente' }) {
+function PacienteCombobox({
+  pacientes,
+  value,
+  onChange,
+  required,
+  label = 'Paciente',
+  placeholder = 'Buscar o elegir paciente...',
+}) {
   const listId = useId();
   const containerRef = useRef(null);
   const inputRef = useRef(null);
@@ -83,7 +90,7 @@ function PacienteCombobox({ pacientes, value, onChange, required, label = 'Pacie
           value={query}
           onChange={handleInputChange}
           onFocus={handleFocus}
-          placeholder="Buscar o elegir paciente..."
+          placeholder={placeholder}
           autoComplete="off"
           role="combobox"
           aria-expanded={abierto}

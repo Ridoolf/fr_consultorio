@@ -9,6 +9,7 @@ import PageHeader from '../components/ui/PageHeader';
 import Button from '../components/ui/Button';
 import Spinner from '../components/ui/Spinner';
 import EmptyState from '../components/ui/EmptyState';
+import PacienteCombobox from '../components/ui/PacienteCombobox';
 
 function CajaPage() {
   const [paso, setPaso] = useState(1);
@@ -20,7 +21,7 @@ function CajaPage() {
   const [guardando, setGuardando] = useState(false);
   const [pagos, setPagos] = useState([]);
   const [cargandoPagos, setCargandoPagos] = useState(true);
-  const [filtros, setFiltros] = useState({ fecha: hoyLocal(), paciente: '' });
+  const [filtros, setFiltros] = useState({ fecha: '', paciente: '' });
   const { showToast } = useToast();
 
   const [form, setForm] = useState({
@@ -243,29 +244,58 @@ function CajaPage() {
       </form>
 
       <div style={{ marginTop: '2rem' }}>
-        <h3 className="page-header-title" style={{ fontSize: '1.1rem', marginBottom: '1rem' }}>Pagos recientes</h3>
+        <h3 className="page-header-title" style={{ fontSize: '1.1rem', marginBottom: '0.25rem' }}>Pagos registrados</h3>
+        <p className="form-hint" style={{ marginBottom: '1rem' }}>
+          {filtros.fecha || filtros.paciente
+            ? 'Filtrando resultados. Dejá los campos vacíos para ver todos.'
+            : 'Mostrando todos los pagos de todos los pacientes.'}
+        </p>
         {errorPagos && <div className="error-box">{errorPagos}</div>}
 
         <div className="filters-bar">
           <div className="form-field" style={{ flex: '0 0 160px' }}>
-            <label className="form-label">Fecha</label>
-            <input type="date" className="form-input" value={filtros.fecha} onChange={(e) => setFiltros((p) => ({ ...p, fecha: e.target.value }))} />
+            <label className="form-label">
+              Fecha <span className="form-hint-inline">(opcional)</span>
+            </label>
+            <input
+              type="date"
+              className="form-input"
+              value={filtros.fecha}
+              onChange={(e) => setFiltros((p) => ({ ...p, fecha: e.target.value }))}
+            />
           </div>
-          <div className="form-field" style={{ flex: '1 1 200px' }}>
-            <label className="form-label">Paciente</label>
-            <select className="form-select" value={filtros.paciente} onChange={(e) => setFiltros((p) => ({ ...p, paciente: e.target.value }))}>
-              <option value="">Todos</option>
-              {pacientes.map((p) => (
-                <option key={p.id} value={p.id}>{p.apellido}, {p.nombre}</option>
-              ))}
-            </select>
+          <div className="form-field" style={{ flex: '1 1 220px' }}>
+            <PacienteCombobox
+              label={<>Paciente <span className="form-hint-inline">(opcional)</span></>}
+              pacientes={pacientes}
+              value={filtros.paciente}
+              onChange={(v) => setFiltros((p) => ({ ...p, paciente: v }))}
+              placeholder="Todos los pacientes"
+            />
           </div>
+          {(filtros.fecha || filtros.paciente) && (
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => setFiltros({ fecha: '', paciente: '' })}
+            >
+              Limpiar filtros
+            </Button>
+          )}
         </div>
 
         {cargandoPagos ? (
           <Spinner label="Cargando pagos..." />
         ) : pagos.length === 0 ? (
-          <EmptyState icon="💰" title="Sin pagos" description="No hay pagos para esos filtros." />
+          <EmptyState
+            icon="💰"
+            title="Sin pagos"
+            description={
+              filtros.fecha || filtros.paciente
+                ? 'No hay pagos para esos filtros.'
+                : 'Todavía no hay pagos registrados.'
+            }
+          />
         ) : (
           pagos.map((p) => (
             <div key={p.id} className="data-card">
