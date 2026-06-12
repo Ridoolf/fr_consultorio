@@ -310,6 +310,36 @@ a:hover {
   background: var(--color-blanco);
 }
 
+.password-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.password-input-wrap .form-input {
+  width: 100%;
+  padding-right: 2.75rem;
+}
+
+.password-toggle-btn {
+  position: absolute;
+  right: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--touch-min);
+  height: var(--touch-min);
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--color-texto-claro);
+  border-radius: var(--radius-sm);
+}
+
+.password-toggle-btn:hover {
+  color: var(--color-principal);
+}
+
 .form-actions {
   display: flex;
   flex-wrap: wrap;
