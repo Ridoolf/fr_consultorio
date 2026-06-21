@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { odontogramaAPI } from '../services/api';
 import { getErrorMessage } from '../utils/errors';
 import { useToast } from '../context/ToastContext';
-import { normalizarPiezas, piezaConNumero } from '../utils/odontograma';
+import { normalizarPiezas, piezaConNumero, piezaVacia } from '../utils/odontograma';
 import Button from './ui/Button';
 import Spinner from './ui/Spinner';
 import OdontogramaChart, { OdontogramaPiezaEditor } from './OdontogramaChart';

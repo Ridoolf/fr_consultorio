@@ -1,5 +1,6 @@
 from rest_framework import filters, viewsets
 from rest_framework.decorators import action
+from rest_framework.exceptions import NotFound
 from rest_framework.response import Response
 
 from .models import AlertaMedica, Odontograma, Paciente, PacienteDocumento, PacienteNota, odontograma_vacio
@@ -91,6 +92,8 @@ class OdontogramaViewSet(viewsets.ModelViewSet):
     def list(self, request, *args, **kwargs):
         paciente_id = request.query_params.get('paciente')
         if paciente_id:
+            if not Paciente.objects.filter(pk=paciente_id).exists():
+                raise NotFound('Paciente no encontrado.')
             odontograma, _ = Odontograma.objects.get_or_create(
                 paciente_id=paciente_id,
                 defaults={'piezas': odontograma_vacio()},

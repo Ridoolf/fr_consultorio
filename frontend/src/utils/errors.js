@@ -1,8 +1,17 @@
 export function getErrorMessage(err, fallback = 'Ocurrió un error inesperado.') {
+  const status = err?.response?.status;
   const data = err?.response?.data;
   if (!data) return fallback;
 
-  if (typeof data === 'string') return data;
+  if (typeof data === 'string') {
+    if (data.trim().startsWith('<!') || data.includes('<html')) {
+      if (status === 404) {
+        return 'El servidor no encontró el recurso. Verificá que el backend esté actualizado (deploy en Render) y que las migraciones estén aplicadas.';
+      }
+      return fallback;
+    }
+    return data;
+  }
   if (data.detail) return String(data.detail);
 
   const parts = [];
