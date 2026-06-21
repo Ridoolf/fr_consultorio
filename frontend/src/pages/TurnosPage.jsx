@@ -60,131 +60,140 @@ function TurnosPage() {
   };
 
   return (
-    <div className="page">
+    <div className="page page--fab">
       <PageHeader
         title="Agenda"
         subtitle={formatoFechaLindo(fecha)}
       />
 
-      <Card>
-        <div className="date-nav">
-        <Button variant="secondary" onClick={() => setFecha(sumarDias(fecha, -1))}>
-          ◀ Anterior
-        </Button>
-        <input
-          type="date"
-          value={fecha}
-          onChange={(e) => setFecha(e.target.value)}
-          aria-label="Seleccionar fecha"
-        />
-        <Button variant="ghost" onClick={() => setFecha(hoyLocal())}>
-          Hoy
-        </Button>
-        <Button variant="secondary" onClick={() => setFecha(sumarDias(fecha, 1))}>
-          Siguiente ▶
-        </Button>
-        </div>
-      </Card>
-
       {error && <div className="error-box">{error}</div>}
 
-      <Card>
-        {cargando ? (
-        <Spinner label="Cargando turnos..." />
-      ) : turnos.length === 0 ? (
-        <EmptyState
-          icon="📅"
-          title="Sin turnos"
-          description="No hay turnos para esta fecha."
-          action={
-            <Button variant="primary" onClick={() => navigate(`/turnos/nuevo?fecha=${fecha}`)}>
-              + Nuevo turno
-            </Button>
-          }
-        />
-      ) : (
-        <div>
-          {turnos.map((t, i) => (
-            <motion.div
-              key={t.id}
-              className="turno-card"
-              initial={{ opacity: 0, x: -8 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: i * 0.05 }}
-            >
-              <div className="turno-hora">
-                {t.hora_inicio?.slice(0, 5)}
-                <div style={{ fontSize: '0.75rem', fontWeight: 400, color: 'var(--color-texto-claro)' }}>
-                  {t.hora_fin?.slice(0, 5)}
-                </div>
-              </div>
-              <div style={{ flex: 1 }}>
-                <div className="data-card-header">
-                  <Link to={`/pacientes/${t.paciente}`} className="data-card-title">
-                    {t.paciente_nombre_completo}
-                  </Link>
-                  <Badge estado={t.estado} />
-                </div>
-                <div className="data-card-meta">{t.motivo || 'Sin motivo'}</div>
-                <div className="data-card-actions">
-                  {t.estado === 'pendiente' && (
-                    <Button
-                      size="sm"
-                      variant="primary"
-                      disabled={accionId === t.id}
-                      onClick={() => ejecutarAccion(t.id, 'confirmar')}
-                    >
-                      Confirmar
-                    </Button>
-                  )}
-                  {t.estado !== 'realizado' && t.estado !== 'cancelado' && (
-                    <Button
-                      size="sm"
-                      variant="secondary"
-                      disabled={accionId === t.id}
-                      onClick={() =>
-                        setConfirm({
-                          id: t.id,
-                          accion: 'realizado',
-                          title: 'Marcar realizado',
-                          message: '¿Marcar este turno como realizado?',
-                        })
-                      }
-                    >
-                      Realizado
-                    </Button>
-                  )}
-                  {t.estado !== 'cancelado' && t.estado !== 'realizado' && (
-                    <Button
-                      size="sm"
-                      variant="danger"
-                      disabled={accionId === t.id}
-                      onClick={() =>
-                        setConfirm({
-                          id: t.id,
-                          accion: 'cancelar',
-                          title: 'Cancelar turno',
-                          message: '¿Cancelar este turno?',
-                          danger: true,
-                        })
-                      }
-                    >
-                      Cancelar
-                    </Button>
-                  )}
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => navigate(`/turnos/${t.id}/editar`)}
-                  >
-                    Editar
-                  </Button>
-                </div>
-              </div>
-            </motion.div>
-          ))}
+      <Card className="turnos-panel">
+        <div className="date-nav">
+          <input
+            type="date"
+            className="date-nav-input"
+            value={fecha}
+            onChange={(e) => setFecha(e.target.value)}
+            aria-label="Seleccionar fecha"
+          />
+          <Button
+            variant="secondary"
+            aria-label="Día anterior"
+            onClick={() => setFecha(sumarDias(fecha, -1))}
+          >
+            <span className="date-nav-label date-nav-label--long">◀ Anterior</span>
+            <span className="date-nav-label date-nav-label--short" aria-hidden>◀</span>
+          </Button>
+          <Button variant="ghost" onClick={() => setFecha(hoyLocal())}>
+            Hoy
+          </Button>
+          <Button
+            variant="secondary"
+            aria-label="Día siguiente"
+            onClick={() => setFecha(sumarDias(fecha, 1))}
+          >
+            <span className="date-nav-label date-nav-label--long">Siguiente ▶</span>
+            <span className="date-nav-label date-nav-label--short" aria-hidden>▶</span>
+          </Button>
         </div>
-      )}
+
+        <div className="turnos-panel-body">
+          {cargando ? (
+            <Spinner label="Cargando turnos..." />
+          ) : turnos.length === 0 ? (
+            <EmptyState
+              icon="📅"
+              title="Sin turnos"
+              description="No hay turnos para esta fecha."
+              action={
+                <Button variant="primary" onClick={() => navigate(`/turnos/nuevo?fecha=${fecha}`)}>
+                  + Nuevo turno
+                </Button>
+              }
+            />
+          ) : (
+            <div>
+              {turnos.map((t, i) => (
+                <motion.div
+                  key={t.id}
+                  className="turno-card"
+                  initial={{ opacity: 0, x: -8 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: i * 0.05 }}
+                >
+                  <div className="turno-hora">
+                    <span>{t.hora_inicio?.slice(0, 5)}</span>
+                    <span className="turno-hora-fin">{t.hora_fin?.slice(0, 5)}</span>
+                  </div>
+                  <div className="turno-card-body">
+                    <div className="data-card-header">
+                      <Link to={`/pacientes/${t.paciente}`} className="data-card-title">
+                        {t.paciente_nombre_completo}
+                      </Link>
+                      <Badge estado={t.estado} />
+                    </div>
+                    <div className="data-card-meta">{t.motivo || 'Sin motivo'}</div>
+                    <div className="data-card-actions">
+                      {t.estado === 'pendiente' && (
+                        <Button
+                          size="sm"
+                          variant="primary"
+                          disabled={accionId === t.id}
+                          onClick={() => ejecutarAccion(t.id, 'confirmar')}
+                        >
+                          Confirmar
+                        </Button>
+                      )}
+                      {t.estado !== 'realizado' && t.estado !== 'cancelado' && (
+                        <Button
+                          size="sm"
+                          variant="secondary"
+                          disabled={accionId === t.id}
+                          onClick={() =>
+                            setConfirm({
+                              id: t.id,
+                              accion: 'realizado',
+                              title: 'Marcar realizado',
+                              message: '¿Marcar este turno como realizado?',
+                            })
+                          }
+                        >
+                          Realizado
+                        </Button>
+                      )}
+                      {t.estado !== 'cancelado' && t.estado !== 'realizado' && (
+                        <Button
+                          size="sm"
+                          variant="danger"
+                          disabled={accionId === t.id}
+                          onClick={() =>
+                            setConfirm({
+                              id: t.id,
+                              accion: 'cancelar',
+                              title: 'Cancelar turno',
+                              message: '¿Cancelar este turno?',
+                              danger: true,
+                            })
+                          }
+                        >
+                          Cancelar
+                        </Button>
+                      )}
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => navigate(`/turnos/${t.id}/editar`)}
+                      >
+                        Editar
+                      </Button>
+                    </div>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          )}
+        </div>
       </Card>
 
       <button

@@ -341,13 +341,204 @@ a:hover {
 }
 
 @media (max-width: 767px) {
-  .page-header-brand {
-    gap: var(--space-4);
+  :root {
+    --content-padding-x: 0.75rem;
+    --content-padding-y: var(--space-3);
+    --header-height: 48px;
   }
 
-  .brand-logo--sm {
-    width: 92px;
-    height: 92px;
+  .app-header-title {
+    font-size: 1rem;
+  }
+
+  .app-header-subtitle {
+    font-size: 0.72rem;
+  }
+
+  .page {
+    gap: var(--space-3);
+  }
+
+  .page--fab {
+    padding-bottom: calc(56px + var(--space-5));
+  }
+
+  .card,
+  .surface-card {
+    padding: var(--space-3);
+    border-radius: var(--radius-md);
+  }
+
+  .page-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--space-2);
+  }
+
+  .page-header-brand {
+    gap: var(--space-3);
+    align-items: center;
+  }
+
+  /* El sidebar ya muestra el logo; liberar ancho en móvil */
+  .page-header-brand .brand-logo--sm {
+    display: none;
+  }
+
+  .page-header-title {
+    font-size: 1.15rem;
+    line-height: 1.25;
+  }
+
+  .page-header-subtitle {
+    font-size: 0.85rem;
+    line-height: 1.35;
+  }
+
+  .page-header-action {
+    width: 100%;
+  }
+
+  .page-header-action .btn {
+    width: 100%;
+  }
+
+  .card .filters-bar,
+  .surface-card .filters-bar {
+    padding: 0;
+    margin-bottom: 0;
+    background: transparent;
+    gap: var(--space-2);
+  }
+
+  .filters-bar .form-field {
+    flex: 1 1 100% !important;
+    min-width: 0;
+  }
+
+  .filters-bar .btn {
+    width: 100%;
+  }
+
+  .date-nav {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: var(--space-2);
+    margin-bottom: 0;
+    align-items: stretch;
+  }
+
+  .date-nav-input {
+    grid-column: 1 / -1;
+    width: 100%;
+  }
+
+  .date-nav .btn {
+    min-width: 0;
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+  }
+
+  .date-nav-label--long {
+    display: none;
+  }
+
+  .date-nav-label--short {
+    display: inline;
+  }
+
+  .turnos-panel .date-nav {
+    margin-bottom: var(--space-3);
+    padding-bottom: var(--space-3);
+    border-bottom: 1px solid rgba(var(--color-principal-rgb), 0.1);
+  }
+
+  .turnos-panel-body {
+    min-height: 120px;
+  }
+
+  .data-card {
+    padding: var(--space-3);
+    margin-bottom: var(--space-3);
+  }
+
+  .data-card-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-2);
+  }
+
+  .data-card-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-2);
+    margin-top: var(--space-2);
+  }
+
+  .data-card-actions .btn {
+    width: 100%;
+    min-height: var(--touch-min);
+  }
+
+  .data-card-actions .btn-sm {
+    padding: 0.5rem 0.65rem;
+    font-size: 0.85rem;
+    min-height: var(--touch-min);
+  }
+
+  .turno-card {
+    flex-direction: column;
+    gap: var(--space-2);
+    padding: var(--space-3);
+  }
+
+  .turno-hora {
+    display: flex;
+    align-items: baseline;
+    gap: var(--space-2);
+    min-width: unset;
+    font-size: 1.05rem;
+  }
+
+  .turno-card .data-card-header {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: flex-start;
+    width: 100%;
+  }
+
+  .turno-card .data-card-actions {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .empty-state {
+    padding: var(--space-4) var(--space-2);
+  }
+
+  .empty-state-icon {
+    font-size: 2rem;
+  }
+
+  .home-quick-action {
+    padding: var(--space-3);
+  }
+
+  .home-quick-action-label {
+    font-size: 0.8rem;
+    text-align: center;
+    line-height: 1.25;
+  }
+
+  .home-greeting {
+    font-size: 1.15rem;
+  }
+
+  .btn-fab {
+    bottom: var(--space-3);
+    right: var(--space-3);
+    width: 52px;
+    height: 52px;
+    font-size: 1.35rem;
   }
 
   .app-root--sidebar-expanded {
@@ -357,6 +548,49 @@ a:hover {
   .sidebar--expanded {
     width: var(--sidebar-width-expanded);
     box-shadow: var(--shadow-lg);
+  }
+
+  .ficha-tab-panel {
+    padding-top: var(--space-3);
+  }
+
+  .ficha-subpanel {
+    gap: var(--space-3);
+  }
+
+  .ficha-subpanel-form {
+    padding: var(--space-3);
+  }
+
+  .ficha-tab-group {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .ficha-tab-group-label {
+    min-width: unset;
+  }
+
+  .tab {
+    padding: var(--space-2) var(--space-3);
+    font-size: 0.85rem;
+    white-space: nowrap;
+  }
+
+  .ficha-panel-footer {
+    margin-top: var(--space-4);
+    padding-top: var(--space-3);
+    flex-direction: column;
+  }
+
+  .ficha-panel-footer .btn {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  :root {
+    --content-padding-x: 0.5rem;
   }
 }
 
@@ -733,6 +967,14 @@ a:hover {
   font-size: 1.1rem;
   color: var(--color-principal);
   min-width: 90px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.turno-card-body {
+  flex: 1;
+  min-width: 0;
 }
 
 .turno-hora-fin {
@@ -1219,6 +1461,7 @@ a:hover {
   margin-bottom: var(--space-4);
 }
 
+.date-nav-input,
 .date-nav input[type="date"] {
   min-height: var(--touch-min);
   padding: 0.5rem 0.75rem;
@@ -1226,6 +1469,10 @@ a:hover {
   border: 1px solid rgba(var(--color-principal-rgb), 0.25);
   font-family: inherit;
   font-size: 1rem;
+}
+
+.date-nav-label--short {
+  display: none;
 }
 
 /* Auth loading */
