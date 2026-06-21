@@ -116,66 +116,74 @@ function TurnoForm() {
     }
   };
 
-  if (cargando) return <Card><Spinner /></Card>;
+  if (cargando) {
+    return (
+      <div className="page">
+        <Card><Spinner /></Card>
+      </div>
+    );
+  }
 
   return (
-    <Card>
+    <div className="page">
       <PageHeader title={esEdicion ? 'Editar turno' : 'Nuevo turno'} />
 
-      {error && <div className="error-box">{error}</div>}
-      {errorTratamientos && <div className="error-box">{errorTratamientos}</div>}
+      <Card>
+        {error && <div className="error-box">{error}</div>}
+        {errorTratamientos && <div className="error-box">{errorTratamientos}</div>}
 
-      <form onSubmit={handleSubmit} className="form-grid">
-        <PacienteCombobox
-          pacientes={pacientes}
-          value={form.paciente}
-          onChange={(id) => setForm((prev) => ({ ...prev, paciente: id }))}
-          required
-        />
-
-        <div className="form-row-2">
-          <div className="form-field">
-            <label className="form-label">Fecha</label>
-            <input type="date" name="fecha" className="form-input" value={form.fecha} onChange={handleChange} required />
-          </div>
-          <TimeInput24
-            name="hora_inicio"
-            value={form.hora_inicio}
-            onChange={(v) => setForm((prev) => ({ ...prev, hora_inicio: v }))}
+        <form onSubmit={handleSubmit} className="form-grid">
+          <PacienteCombobox
+            pacientes={pacientes}
+            value={form.paciente}
+            onChange={(id) => setForm((prev) => ({ ...prev, paciente: id }))}
             required
           />
-        </div>
 
-        <div className="form-field">
-          <label className="form-label">Duración (min)</label>
-          <input type="number" name="duracion_minutos" className="form-input" value={form.duracion_minutos} onChange={handleChange} min={5} step={5} />
-        </div>
+          <div className="form-row-2">
+            <div className="form-field">
+              <label className="form-label">Fecha</label>
+              <input type="date" name="fecha" className="form-input" value={form.fecha} onChange={handleChange} required />
+            </div>
+            <TimeInput24
+              name="hora_inicio"
+              value={form.hora_inicio}
+              onChange={(v) => setForm((prev) => ({ ...prev, hora_inicio: v }))}
+              required
+            />
+          </div>
 
-        <div className="form-field">
-          <label className="form-label">Motivo (tratamiento)</label>
-          <select name="motivo" className="form-select" value={form.motivo} onChange={handleChange} required>
-            <option value="">Seleccionar...</option>
-            {tratamientos.map((t) => (
-              <option key={t.id} value={t.nombre}>{t.nombre}</option>
-            ))}
-          </select>
-        </div>
+          <div className="form-field">
+            <label className="form-label">Duración (min)</label>
+            <input type="number" name="duracion_minutos" className="form-input" value={form.duracion_minutos} onChange={handleChange} min={5} step={5} />
+          </div>
 
-        <div className="form-field">
-          <label className="form-label">Notas internas</label>
-          <textarea name="notas_internas" className="form-textarea" value={form.notas_internas} onChange={handleChange} rows={2} />
-        </div>
+          <div className="form-field">
+            <label className="form-label">Motivo (tratamiento)</label>
+            <select name="motivo" className="form-select" value={form.motivo} onChange={handleChange} required>
+              <option value="">Seleccionar...</option>
+              {tratamientos.map((t) => (
+                <option key={t.id} value={t.nombre}>{t.nombre}</option>
+              ))}
+            </select>
+          </div>
 
-        <div className="form-actions">
-          <Button type="submit" variant="primary" disabled={guardando}>
-            {guardando ? 'Guardando...' : esEdicion ? 'Guardar cambios' : 'Guardar turno'}
-          </Button>
-          <Button type="button" variant="secondary" onClick={() => navigate(`/turnos?fecha=${form.fecha}`)}>
-            Cancelar
-          </Button>
-        </div>
-      </form>
-    </Card>
+          <div className="form-field">
+            <label className="form-label">Notas internas</label>
+            <textarea name="notas_internas" className="form-textarea" value={form.notas_internas} onChange={handleChange} rows={2} />
+          </div>
+
+          <div className="form-actions">
+            <Button type="submit" variant="primary" disabled={guardando}>
+              {guardando ? 'Guardando...' : esEdicion ? 'Guardar cambios' : 'Guardar turno'}
+            </Button>
+            <Button type="button" variant="secondary" onClick={() => navigate(`/turnos?fecha=${form.fecha}`)}>
+              Cancelar
+            </Button>
+          </div>
+        </form>
+      </Card>
+    </div>
   );
 }
 

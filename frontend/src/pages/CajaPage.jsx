@@ -155,15 +155,22 @@ function CajaPage() {
     }
   };
 
-  if (cargando) return <Card><Spinner /></Card>;
+  if (cargando) {
+    return (
+      <div className="page">
+        <Card><Spinner /></Card>
+      </div>
+    );
+  }
 
   return (
-    <Card>
+    <div className="page">
       <PageHeader title="Caja" subtitle="Registrar cobros y ver pagos" />
 
       {error && <div className="error-box">{error}</div>}
 
-      <div className="caja-steps">
+      <Card>
+        <div className="caja-steps">
         <div className={`caja-step${paso === 1 ? ' active' : ''}`}>1. Paciente y fecha</div>
         <div className={`caja-step${paso === 2 ? ' active' : ''}`}>2. Detalle del cobro</div>
       </div>
@@ -242,8 +249,9 @@ function CajaPage() {
           </>
         )}
       </form>
+      </Card>
 
-      <div style={{ marginTop: '2rem' }}>
+      <Card>
         <h3 className="page-header-title" style={{ fontSize: '1.1rem', marginBottom: '0.25rem' }}>Pagos registrados</h3>
         <p className="form-hint" style={{ marginBottom: '1rem' }}>
           {filtros.fecha || filtros.paciente
@@ -316,8 +324,8 @@ function CajaPage() {
             </div>
           ))
         )}
-      </div>
-    </Card>
+      </Card>
+    </div>
   );
 }
 

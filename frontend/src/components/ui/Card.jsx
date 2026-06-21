@@ -7,7 +7,7 @@ function Card({ children, className = '', animate = true }) {
     : {};
 
   return (
-    <Comp className={`card ${className}`.trim()} {...motionProps}>
+    <Comp className={`surface-card ${className}`.trim()} {...motionProps}>
       {children}
     </Comp>
   );

@@ -60,13 +60,14 @@ function TurnosPage() {
   };
 
   return (
-    <Card>
+    <div className="page">
       <PageHeader
         title="Agenda"
         subtitle={formatoFechaLindo(fecha)}
       />
 
-      <div className="date-nav">
+      <Card>
+        <div className="date-nav">
         <Button variant="secondary" onClick={() => setFecha(sumarDias(fecha, -1))}>
           ◀ Anterior
         </Button>
@@ -82,11 +83,13 @@ function TurnosPage() {
         <Button variant="secondary" onClick={() => setFecha(sumarDias(fecha, 1))}>
           Siguiente ▶
         </Button>
-      </div>
+        </div>
+      </Card>
 
       {error && <div className="error-box">{error}</div>}
 
-      {cargando ? (
+      <Card>
+        {cargando ? (
         <Spinner label="Cargando turnos..." />
       ) : turnos.length === 0 ? (
         <EmptyState
@@ -182,6 +185,7 @@ function TurnosPage() {
           ))}
         </div>
       )}
+      </Card>
 
       <button
         type="button"
@@ -200,7 +204,7 @@ function TurnosPage() {
         onCancel={() => setConfirm(null)}
         onConfirm={() => confirm && ejecutarAccion(confirm.id, confirm.accion)}
       />
-    </Card>
+    </div>
   );
 }
 

@@ -12,14 +12,16 @@ function HomePage() {
   const nombre = nombreParaSaludo(user?.username);
 
   return (
-    <Card>
+    <div className="page">
       <PageHeader title="Inicio" />
 
-      <div className="home-welcome">
-        <p className="home-fecha">{formatoFechaLindo(hoy)}</p>
-        {nombre && <p className="home-greeting">Hola, {nombre}</p>}
-        <p className="home-frase">{fraseDelDia()}</p>
-      </div>
+      <Card>
+        <div className="home-welcome">
+          <p className="home-fecha">{formatoFechaLindo(hoy)}</p>
+          {nombre && <p className="home-greeting">Hola, {nombre}</p>}
+          <p className="home-frase">{fraseDelDia()}</p>
+        </div>
+      </Card>
 
       <div className="home-quick-actions">
         <button
@@ -55,7 +57,7 @@ function HomePage() {
           <span className="home-quick-action-label">Ver agenda</span>
         </button>
       </div>
-    </Card>
+    </div>
   );
 }
 

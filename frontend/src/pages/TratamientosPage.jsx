@@ -75,12 +75,13 @@ function TratamientosPage() {
   };
 
   return (
-    <Card>
+    <div className="page">
       <PageHeader title="Tratamientos" subtitle="Catálogo de prestaciones" />
 
       {error && <div className="error-box">{error}</div>}
 
-      <form onSubmit={handleSubmit} className="form-grid" style={{ marginBottom: '1.5rem' }}>
+      <Card>
+        <form onSubmit={handleSubmit} className="form-grid">
         <div className="form-row-2">
           <div className="form-field">
             <label className="form-label">Nombre</label>
@@ -101,9 +102,11 @@ function TratamientosPage() {
             </Button>
           )}
         </div>
-      </form>
+        </form>
+      </Card>
 
-      {cargando ? (
+      <Card>
+        {cargando ? (
         <Spinner />
       ) : tratamientos.length === 0 ? (
         <EmptyState icon="🦷" title="Sin tratamientos" description="Agregá el primero con el formulario de arriba." />
@@ -130,6 +133,7 @@ function TratamientosPage() {
           </motion.div>
         ))
       )}
+      </Card>
 
       <ConfirmDialog
         open={Boolean(confirmDelete)}
@@ -140,7 +144,7 @@ function TratamientosPage() {
         onCancel={() => setConfirmDelete(null)}
         onConfirm={() => confirmDelete && handleDelete(confirmDelete)}
       />
-    </Card>
+    </div>
   );
 }
 

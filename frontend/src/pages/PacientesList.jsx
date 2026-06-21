@@ -75,7 +75,7 @@ function PacientesList() {
   };
 
   return (
-    <Card>
+    <div className="page">
       <PageHeader
         title="Pacientes"
         subtitle={`${pacientes.length} registro${pacientes.length !== 1 ? 's' : ''}`}
@@ -86,7 +86,8 @@ function PacientesList() {
         }
       />
 
-      <form onSubmit={handleSearchSubmit} className="filters-bar">
+      <Card>
+        <form onSubmit={handleSearchSubmit} className="filters-bar">
         <div className="form-field" style={{ flex: '1 1 200px' }}>
           <label className="form-label">Buscar</label>
           <input
@@ -119,11 +120,13 @@ function PacientesList() {
           Incluir inactivos
         </label>
         <Button type="submit" variant="primary">Buscar</Button>
-      </form>
+        </form>
+      </Card>
 
       {error && <div className="error-box">{error}</div>}
 
-      <div className={`loading-overlay${cargando ? ' is-loading' : ''}`}>
+      <Card>
+        <div className={`loading-overlay${cargando ? ' is-loading' : ''}`}>
         {cargando && pacientes.length === 0 ? (
           <Spinner />
         ) : pacientes.length === 0 ? (
@@ -191,6 +194,7 @@ function PacientesList() {
           </div>
         )}
       </div>
+      </Card>
 
       <ConfirmDialog
         open={Boolean(confirm)}
@@ -201,7 +205,7 @@ function PacientesList() {
         onCancel={() => setConfirm(null)}
         onConfirm={() => confirm && handleToggleActivo(confirm.paciente)}
       />
-    </Card>
+    </div>
   );
 }
 

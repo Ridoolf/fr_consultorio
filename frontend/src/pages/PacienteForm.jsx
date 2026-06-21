@@ -163,22 +163,28 @@ function PacienteForm() {
   };
 
   if (cargando) {
-    return <Card><Spinner label="Cargando ficha..." /></Card>;
+    return (
+      <div className="page">
+        <Card><Spinner label="Cargando ficha..." /></Card>
+      </div>
+    );
   }
 
   if (errorCarga) {
     return (
-      <Card>
-        <div className="error-box">{errorCarga}</div>
-        <Button variant="primary" onClick={() => navigate('/pacientes')}>
-          Volver a la lista
-        </Button>
-      </Card>
+      <div className="page">
+        <Card>
+          <div className="error-box">{errorCarga}</div>
+          <Button variant="primary" onClick={() => navigate('/pacientes')}>
+            Volver a la lista
+          </Button>
+        </Card>
+      </div>
     );
   }
 
   return (
-    <Card>
+    <div className="page">
       <PageHeader
         title={esEdicion ? `${form.apellido}, ${form.nombre}` : 'Nuevo paciente'}
         subtitle={
@@ -246,13 +252,15 @@ function PacienteForm() {
 
       <div className="ficha-tab-panel">
         {!pacienteCreado && tab !== 'datos' && (
-          <div className="info-box">
-            Guardá los datos básicos del paciente para habilitar las demás secciones.
-          </div>
+          <Card>
+            <div className="info-box">
+              Guardá los datos básicos del paciente para habilitar las demás secciones.
+            </div>
+          </Card>
         )}
 
         {tab === 'datos' && (
-          <>
+          <Card>
             {error && <div className="error-box">{error}</div>}
             <form onSubmit={handleSubmitDatos} className="form-grid">
               <h3 className="form-section-title form-section-title--first">Datos básicos</h3>
@@ -330,15 +338,27 @@ function PacienteForm() {
                 </Button>
               </div>
             </form>
-          </>
+          </Card>
         )}
 
-        {pacienteCreado && tab === 'notas' && <PacienteNotasPanel pacienteId={id} />}
-        {pacienteCreado && tab === 'alertas' && <PacienteAlertasPanel pacienteId={id} />}
-        {pacienteCreado && tab === 'odontograma' && <OdontogramaPanel pacienteId={id} />}
-        {pacienteCreado && tab === 'turnos' && <PacienteTurnosPanel pacienteId={id} />}
-        {pacienteCreado && tab === 'documentos' && <PacienteDocumentosPanel pacienteId={id} />}
-        {pacienteCreado && tab === 'pagos' && <PacientePagosPanel pacienteId={id} />}
+        {pacienteCreado && tab === 'notas' && (
+          <Card><PacienteNotasPanel pacienteId={id} /></Card>
+        )}
+        {pacienteCreado && tab === 'alertas' && (
+          <Card><PacienteAlertasPanel pacienteId={id} /></Card>
+        )}
+        {pacienteCreado && tab === 'odontograma' && (
+          <Card><OdontogramaPanel pacienteId={id} /></Card>
+        )}
+        {pacienteCreado && tab === 'turnos' && (
+          <Card><PacienteTurnosPanel pacienteId={id} /></Card>
+        )}
+        {pacienteCreado && tab === 'documentos' && (
+          <Card><PacienteDocumentosPanel pacienteId={id} /></Card>
+        )}
+        {pacienteCreado && tab === 'pagos' && (
+          <Card><PacientePagosPanel pacienteId={id} /></Card>
+        )}
 
         {enRegistro && pacienteCreado && tab !== 'datos' && (
           <div className="ficha-panel-footer">
@@ -351,7 +371,7 @@ function PacienteForm() {
           </div>
         )}
       </div>
-    </Card>
+    </div>
   );
 }
 
