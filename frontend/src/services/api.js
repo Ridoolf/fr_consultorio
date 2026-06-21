@@ -1,6 +1,8 @@
 import axios from 'axios';
 
-const API_URL = import.meta.env.VITE_API_URL || 'https://fr-consultorio-backend.onrender.com/api';
+const API_URL =
+  import.meta.env.VITE_API_URL ||
+  (import.meta.env.DEV ? '/api' : 'https://fr-consultorio-backend.onrender.com/api');
 
 const api = axios.create({
   baseURL: API_URL,
@@ -67,6 +69,28 @@ export const documentosAPI = {
       headers: { 'Content-Type': 'multipart/form-data' },
     }),
   delete: (id) => api.delete(`/pacientes-documentos/${id}/`),
+};
+
+export const notasAPI = {
+  getByPaciente: (pacienteId) =>
+    api.get('/pacientes-notas/', { params: { paciente: pacienteId } }),
+  create: (data) => api.post('/pacientes-notas/', data),
+  update: (id, data) => api.put(`/pacientes-notas/${id}/`, data),
+  delete: (id) => api.delete(`/pacientes-notas/${id}/`),
+};
+
+export const alertasAPI = {
+  getByPaciente: (pacienteId) =>
+    api.get('/alertas-medicas/', { params: { paciente: pacienteId } }),
+  create: (data) => api.post('/alertas-medicas/', data),
+  update: (id, data) => api.put(`/alertas-medicas/${id}/`, data),
+  delete: (id) => api.delete(`/alertas-medicas/${id}/`),
+};
+
+export const odontogramaAPI = {
+  getByPaciente: (pacienteId) =>
+    api.get('/odontogramas/', { params: { paciente: pacienteId } }),
+  update: (id, data) => api.patch(`/odontogramas/${id}/`, data),
 };
 
 export const tratamientosAPI = {

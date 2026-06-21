@@ -67,6 +67,11 @@ function LoginPage() {
           />
         </div>
         <p className="login-subtitle">Panel interno de gestión</p>
+        {import.meta.env.DEV && (
+          <p className="login-dev-hint">
+            Modo local: usuario <strong>consultorio</strong> · contraseña <strong>local123</strong>
+          </p>
+        )}
 
         {error && <div className="error-box">{error}</div>}
 

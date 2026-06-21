@@ -1,12 +1,18 @@
+import { useCallback, useEffect, useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import SidebarIcon from './ui/SidebarIcon';
+
+const SIDEBAR_STORAGE_KEY = 'sidebar-expanded';
+const MOBILE_BREAKPOINT = 768;
+const STUDIO_NAME = 'Odontología & Ortodoncia';
 
 const navItems = [
-  { path: '/inicio', label: 'Inicio', icon: '🏠', end: true },
-  { path: '/pacientes', label: 'Pacientes', icon: '👤' },
-  { path: '/turnos', label: 'Turnos', icon: '📅' },
-  { path: '/tratamientos', label: 'Tratamientos', icon: '🦷' },
-  { path: '/caja', label: 'Caja', icon: '💰' },
+  { path: '/inicio', label: 'Inicio', icon: 'home', end: true },
+  { path: '/pacientes', label: 'Pacientes', icon: 'pacientes' },
+  { path: '/turnos', label: 'Turnos', icon: 'turnos' },
+  { path: '/tratamientos', label: 'Tratamientos', icon: 'tratamientos' },
+  { path: '/caja', label: 'Caja', icon: 'caja' },
 ];
 
 function getSectionTitle(pathname) {
@@ -18,45 +24,122 @@ function getSectionTitle(pathname) {
   return 'Consultorio';
 }
 
+function readStoredExpanded() {
+  try {
+    return localStorage.getItem(SIDEBAR_STORAGE_KEY) === 'true';
+  } catch {
+    return false;
+  }
+}
+
 function Layout({ children }) {
   const { logout, user } = useAuth();
   const location = useLocation();
   const title = getSectionTitle(location.pathname);
+  const [expanded, setExpanded] = useState(readStoredExpanded);
+  const [isMobile, setIsMobile] = useState(
+    () => typeof window !== 'undefined' && window.innerWidth < MOBILE_BREAKPOINT,
+  );
+
+  useEffect(() => {
+    const onResize = () => setIsMobile(window.innerWidth < MOBILE_BREAKPOINT);
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(SIDEBAR_STORAGE_KEY, String(expanded));
+    } catch {
+      /* ignore */
+    }
+  }, [expanded]);
+
+  const toggleSidebar = useCallback(() => {
+    setExpanded((prev) => !prev);
+  }, []);
+
+  const showBackdrop = isMobile && expanded;
 
   return (
-    <div className="app-root">
-      <header className="app-header">
-        <div>
-          <div className="app-header-title">{title}</div>
-          <div className="app-header-subtitle">
-            Consultorio Odontológico
-            {user?.username && ` · ${user.username}`}
+    <div className={`app-root${expanded ? ' app-root--sidebar-expanded' : ''}`}>
+      {showBackdrop && <div className="sidebar-backdrop" aria-hidden="true" />}
+
+      <aside
+        className={`sidebar${expanded ? ' sidebar--expanded' : ''}`}
+        aria-label="Navegación principal"
+      >
+        <div className="sidebar-brand">
+          <div className="sidebar-brand-row">
+            <img
+              src="/logo.jpeg"
+              alt={STUDIO_NAME}
+              className="sidebar-brand-logo"
+            />
+            <span className="sidebar-brand-name">{STUDIO_NAME}</span>
+            <button
+              type="button"
+              className="sidebar-toggle"
+              onClick={toggleSidebar}
+              aria-label={expanded ? 'Contraer menú' : 'Expandir menú'}
+              aria-expanded={expanded}
+            >
+              <span className={`sidebar-toggle-icon${expanded ? ' sidebar-toggle-icon--expanded' : ''}`}>
+                <SidebarIcon name="chevron" />
+              </span>
+            </button>
           </div>
         </div>
-        <button type="button" className="app-header-logout" onClick={logout}>
-          Salir
-        </button>
-      </header>
 
-      <main className="app-content">
-        <section className="app-main">{children}</section>
-      </main>
+        <nav className="sidebar-nav">
+          {navItems.map((item) => (
+            <NavLink
+              key={item.path}
+              to={item.path}
+              end={item.end}
+              title={expanded ? undefined : item.label}
+              className={({ isActive }) =>
+                `sidebar-link${isActive ? ' sidebar-link--active' : ''}`
+              }
+            >
+              <span className="sidebar-link-icon">
+                <SidebarIcon name={item.icon} />
+              </span>
+              <span className="sidebar-label">{item.label}</span>
+            </NavLink>
+          ))}
+        </nav>
 
-      <nav className="bottom-nav" aria-label="Navegación principal">
-        {navItems.map((item) => (
-          <NavLink
-            key={item.path}
-            to={item.path}
-            end={item.end}
-            className={({ isActive }) =>
-              `bottom-nav-link${isActive ? ' active' : ''}`
-            }
+        <div className="sidebar-footer">
+          <button
+            type="button"
+            className="sidebar-link sidebar-link--logout"
+            onClick={logout}
+            title={expanded ? undefined : 'Salir'}
           >
-            <span className="bottom-nav-icon">{item.icon}</span>
-            {item.label}
-          </NavLink>
-        ))}
-      </nav>
+            <span className="sidebar-link-icon">
+              <SidebarIcon name="logout" />
+            </span>
+            <span className="sidebar-label">Salir</span>
+          </button>
+        </div>
+      </aside>
+
+      <div className="app-shell">
+        <header className="app-header">
+          <div>
+            <div className="app-header-title">{title}</div>
+            <div className="app-header-subtitle">
+              Consultorio Odontológico
+              {user?.username && ` · ${user.username}`}
+            </div>
+          </div>
+        </header>
+
+        <main className="app-content">
+          <section className="app-main">{children}</section>
+        </main>
+      </div>
     </div>
   );
 }

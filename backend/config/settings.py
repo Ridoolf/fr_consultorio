@@ -5,6 +5,25 @@ import dj_database_url
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+
+def _load_env_file(path: Path) -> None:
+    if not path.exists():
+        return
+    for line in path.read_text(encoding='utf-8').splitlines():
+        line = line.strip()
+        if not line or line.startswith('#') or '=' not in line:
+            continue
+        key, _, value = line.partition('=')
+        os.environ[key.strip()] = value.strip().strip('"').strip("'")
+
+
+_load_env_file(BASE_DIR / '.env')
+
+# USE_LOCAL_DB=true fuerza SQLite aunque exista DATABASE_URL (solo desarrollo aislado)
+USE_LOCAL_DB = os.environ.get('USE_LOCAL_DB', 'false').lower() in ('true', '1', 'yes')
+if USE_LOCAL_DB:
+    os.environ.pop('DATABASE_URL', None)
+
 SECRET_KEY = os.environ.get(
     'SECRET_KEY',
     'django-insecure-dhelk=%zv0wtygh(^^h%ul@(50s@c0o$gwi0%5x%kq=n!gpr&z',
@@ -28,7 +47,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework_simplejwt',
     'corsheaders',
-    'pacientes',
+    'pacientes.apps.PacientesConfig',
     'turnos',
     'caja',
 ]

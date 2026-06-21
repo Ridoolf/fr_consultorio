@@ -1,7 +1,8 @@
 import os
 
 from rest_framework import serializers
-from .models import Paciente, PacienteDocumento
+
+from .models import AlertaMedica, Odontograma, Paciente, PacienteDocumento, PacienteNota
 
 ALLOWED_DOC_EXTENSIONS = {'.pdf', '.jpg', '.jpeg', '.png', '.webp'}
 MAX_DOC_SIZE_BYTES = 10 * 1024 * 1024  # 10 MB
@@ -21,7 +22,10 @@ class PacienteSerializer(serializers.ModelSerializer):
             'edad',
             'telefono',
             'email',
-            'observaciones',
+            'direccion',
+            'ocupacion',
+            'estado_civil',
+            'genero',
             'activo',
             'fecha_registro',
             'fecha_actualizacion',
@@ -30,6 +34,37 @@ class PacienteSerializer(serializers.ModelSerializer):
 
     def get_edad(self, obj):
         return obj.edad
+
+
+class PacienteNotaSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PacienteNota
+        fields = ['id', 'paciente', 'texto', 'fecha_creacion', 'fecha_actualizacion']
+        read_only_fields = ['id', 'fecha_creacion', 'fecha_actualizacion']
+
+
+class AlertaMedicaSerializer(serializers.ModelSerializer):
+    tipo_display = serializers.CharField(source='get_tipo_display', read_only=True)
+
+    class Meta:
+        model = AlertaMedica
+        fields = [
+            'id',
+            'paciente',
+            'tipo',
+            'tipo_display',
+            'descripcion',
+            'detalle',
+            'activa',
+        ]
+        read_only_fields = ['id', 'tipo_display']
+
+
+class OdontogramaSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Odontograma
+        fields = ['id', 'paciente', 'piezas', 'fecha_actualizacion']
+        read_only_fields = ['id', 'fecha_actualizacion']
 
 
 class PacienteDocumentoSerializer(serializers.ModelSerializer):

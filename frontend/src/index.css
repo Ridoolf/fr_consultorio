@@ -3,9 +3,9 @@
 :root {
   --color-fondo: #f5f3f0;
   --color-fondo-gradient: linear-gradient(160deg, #faf9f7 0%, #f0ede8 50%, #e8e4df 100%);
-  --color-principal: #708d63;
-  --color-principal-dark: #5a7350;
-  --color-principal-rgb: 112, 141, 99;
+  --color-principal: #2d3a2f;
+  --color-principal-dark: #1f2821;
+  --color-principal-rgb: 45, 58, 47;
   --color-secundario: #d989b5;
   --color-secundario-light: #f3dfe8;
   --color-secundario-rgb: 217, 137, 181;
@@ -23,7 +23,12 @@
   --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.08);
   --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.1);
   --touch-min: 44px;
-  --nav-bottom-height: 72px;
+  --sidebar-width-collapsed: 72px;
+  --sidebar-width-expanded: 220px;
+  --sidebar-width: var(--sidebar-width-collapsed);
+  --sidebar-bg: var(--color-principal);
+  --sidebar-text: rgba(255, 255, 255, 0.72);
+  --sidebar-text-active: #fff;
   --header-height: 56px;
   --space-1: 0.25rem;
   --space-2: 0.5rem;
@@ -60,9 +65,19 @@ a:hover {
 /* Layout */
 .app-root {
   min-height: 100vh;
+  --sidebar-width: var(--sidebar-width-collapsed);
+}
+
+.app-root--sidebar-expanded {
+  --sidebar-width: var(--sidebar-width-expanded);
+}
+
+.app-shell {
+  min-height: 100vh;
+  margin-left: var(--sidebar-width);
   display: flex;
   flex-direction: column;
-  padding-bottom: var(--nav-bottom-height);
+  transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .app-header {
@@ -90,17 +105,6 @@ a:hover {
   margin-top: 2px;
 }
 
-.app-header-logout {
-  background: rgba(255, 255, 255, 0.15);
-  border: none;
-  color: white;
-  padding: 0.4rem 0.9rem;
-  border-radius: var(--radius-full);
-  font-size: 0.85rem;
-  cursor: pointer;
-  min-height: var(--touch-min);
-}
-
 .app-content {
   padding: var(--space-4);
   max-width: 1100px;
@@ -113,64 +117,229 @@ a:hover {
   width: 100%;
 }
 
-/* Bottom nav — navegación principal en todos los tamaños */
-.bottom-nav {
+/* Sidebar */
+.sidebar-backdrop {
   position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: var(--nav-bottom-height);
-  background: var(--color-blanco);
-  border-top: 1px solid rgba(var(--color-principal-rgb), 0.15);
-  display: flex;
-  justify-content: space-around;
-  align-items: center;
-  z-index: 200;
-  padding: 0 var(--space-2);
-  box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.06);
+  inset: 0;
+  z-index: 240;
+  background: rgba(0, 0, 0, 0.45);
+  pointer-events: none;
+  animation: sidebar-fade-in 0.2s ease;
 }
 
-.bottom-nav-link {
+@keyframes sidebar-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100vh;
+  width: var(--sidebar-width);
+  background: var(--sidebar-bg);
+  display: flex;
+  flex-direction: column;
+  z-index: 250;
+  border-right: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow: 6px 0 24px rgba(0, 0, 0, 0.18);
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s ease;
+  overflow: hidden;
+}
+
+.sidebar-brand {
+  padding: var(--space-3) var(--space-2) var(--space-2);
+  flex-shrink: 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.sidebar-brand-row {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2px;
-  padding: var(--space-2) var(--space-3);
-  border-radius: var(--radius-md);
-  color: var(--color-texto-claro);
-  text-decoration: none;
-  font-size: 0.7rem;
-  font-weight: 500;
-  min-width: 64px;
+  gap: var(--space-2);
+  width: 100%;
+}
+
+.sidebar--expanded .sidebar-brand-row {
+  flex-direction: row;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 0 var(--space-1);
+  min-height: 52px;
+}
+
+.sidebar-brand-logo {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+  border-radius: var(--radius-sm);
+  flex-shrink: 0;
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.sidebar--expanded .sidebar-brand-logo {
+  width: 44px;
+  height: 44px;
+}
+
+.sidebar-brand-name {
+  color: var(--sidebar-text-active);
+  font-size: 0.8rem;
+  font-weight: 600;
+  line-height: 1.25;
+  letter-spacing: 0.01em;
+  flex: 1;
+  min-width: 0;
+  opacity: 0;
+  max-width: 0;
+  overflow: hidden;
+  transform: translateX(-8px);
+  transition:
+    max-width 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+    opacity 0.25s ease,
+    transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.sidebar--expanded .sidebar-brand-name {
+  opacity: 1;
+  max-width: 120px;
+  transform: translateX(0);
+  transition-delay: 0.05s, 0.12s, 0.05s;
+}
+
+.sidebar-nav {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-2) var(--space-2);
+  overflow-y: auto;
+}
+
+.sidebar-footer {
+  padding: var(--space-2) var(--space-2) var(--space-4);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.sidebar-link {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
   min-height: var(--touch-min);
-  justify-content: center;
-  transition: color 0.2s, background 0.2s;
-}
-
-.bottom-nav-link:hover {
+  padding: var(--space-2) var(--space-3);
+  border: none;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--sidebar-text);
   text-decoration: none;
-  background: rgba(var(--color-secundario-rgb), 0.2);
+  font-size: 0.9rem;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.18s ease, color 0.18s ease;
 }
 
-.bottom-nav-link.active {
-  color: var(--color-principal);
-  background: rgba(var(--color-principal-rgb), 0.1);
+.sidebar-link:hover {
+  text-decoration: none;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--sidebar-text-active);
 }
 
-.bottom-nav-icon {
-  font-size: 1.35rem;
-  line-height: 1;
+.sidebar-link--active {
+  background: rgba(255, 255, 255, 0.14);
+  color: var(--sidebar-text-active);
 }
 
-@media (min-width: 768px) {
-  .bottom-nav-link {
-    font-size: 0.8rem;
-    min-width: 80px;
-    padding: var(--space-2) var(--space-4);
+.sidebar:not(.sidebar--expanded) .sidebar-link {
+  justify-content: center;
+  gap: 0;
+  padding-left: var(--space-2);
+  padding-right: var(--space-2);
+}
+
+.sidebar-link--logout {
+  color: rgba(255, 180, 180, 0.9);
+}
+
+.sidebar-link--logout:hover {
+  background: rgba(217, 83, 79, 0.2);
+  color: #ffb4b4;
+}
+
+.sidebar-link-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+}
+
+.sidebar-label {
+  white-space: nowrap;
+  overflow: hidden;
+  opacity: 0;
+  max-width: 0;
+  transform: translateX(-6px);
+  transition:
+    max-width 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+    opacity 0.22s ease,
+    transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.sidebar--expanded .sidebar-label {
+  opacity: 1;
+  max-width: 160px;
+  transform: translateX(0);
+  transition-delay: 0.06s, 0.12s, 0.06s;
+}
+
+.sidebar-toggle {
+  border: none;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.45);
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  padding: 0;
+  transition: color 0.2s ease, background 0.2s ease;
+}
+
+.sidebar--expanded .sidebar-toggle {
+  margin-left: auto;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.sidebar-toggle:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.sidebar-toggle-icon {
+  display: flex;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.sidebar-toggle-icon--expanded {
+  transform: rotate(180deg);
+}
+
+@media (max-width: 767px) {
+  .app-root--sidebar-expanded {
+    --sidebar-width: var(--sidebar-width-collapsed);
   }
 
-  .bottom-nav-icon {
-    font-size: 1.5rem;
+  .sidebar--expanded {
+    width: var(--sidebar-width-expanded);
+    box-shadow: var(--shadow-lg);
   }
 }
 
@@ -195,7 +364,9 @@ a:hover {
   justify-content: space-between;
   align-items: flex-start;
   gap: var(--space-3);
-  margin-bottom: var(--space-5);
+  margin-bottom: var(--space-6);
+  padding-bottom: var(--space-5);
+  border-bottom: 1px solid rgba(var(--color-principal-rgb), 0.1);
 }
 
 .page-header-brand {
@@ -217,9 +388,9 @@ a:hover {
 }
 
 .brand-logo--sm {
-  width: 48px;
-  height: 48px;
-  border-radius: var(--radius-sm);
+  width: 64px;
+  height: 64px;
+  border-radius: var(--radius-md);
 }
 
 .page-header-title {
@@ -413,7 +584,7 @@ a:hover {
 
 .btn-fab {
   position: fixed;
-  bottom: calc(var(--nav-bottom-height) + var(--space-4));
+  bottom: var(--space-4);
   right: var(--space-4);
   width: 56px;
   height: 56px;
@@ -493,11 +664,11 @@ a:hover {
 
 /* Data cards (tablet) */
 .data-card {
-  background: var(--color-superficie);
+  background: var(--color-blanco);
   border-radius: var(--radius-md);
-  padding: var(--space-4);
-  margin-bottom: var(--space-3);
-  border: 1px solid rgba(var(--color-principal-rgb), 0.12);
+  padding: var(--space-5);
+  margin-bottom: var(--space-4);
+  border: 1px solid rgba(var(--color-principal-rgb), 0.1);
   transition: box-shadow 0.2s;
 }
 
@@ -578,7 +749,6 @@ a:hover {
   font-size: 1rem;
   color: var(--color-secundario);
   font-style: italic;
-  font-weight: 600;
   line-height: 1.5;
   max-width: 32rem;
 }
@@ -645,6 +815,90 @@ a:hover {
 }
 
 /* Tabs */
+.ficha-tabs {
+  margin-bottom: var(--space-4);
+}
+
+.ficha-tabs--simple {
+  display: flex;
+  gap: var(--space-1);
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border-bottom: 2px solid rgba(var(--color-principal-rgb), 0.12);
+  padding-bottom: 0;
+}
+
+.ficha-tabs--grouped {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding-bottom: var(--space-4);
+  border-bottom: 2px solid rgba(var(--color-principal-rgb), 0.12);
+}
+
+.ficha-tab-group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+}
+
+.ficha-tab-group-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-texto-claro);
+  min-width: 7.5rem;
+  flex-shrink: 0;
+}
+
+.ficha-tab-group-items {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  flex: 1;
+}
+
+.ficha-tab-panel {
+  padding-top: var(--space-5);
+}
+
+.ficha-subpanel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.ficha-subpanel-title {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--color-principal);
+}
+
+.ficha-subpanel-desc {
+  margin: var(--space-1) 0 0;
+  font-size: 0.9rem;
+  color: var(--color-texto-claro);
+}
+
+.ficha-subpanel-form {
+  padding: var(--space-5);
+  background: var(--color-superficie);
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(var(--color-principal-rgb), 0.1);
+}
+
+.ficha-panel-footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin-top: var(--space-6);
+  padding-top: var(--space-5);
+  border-top: 1px solid rgba(var(--color-principal-rgb), 0.12);
+}
+
 .tabs {
   display: flex;
   gap: var(--space-1);
@@ -656,11 +910,11 @@ a:hover {
 }
 
 .tab {
-  padding: var(--space-3) var(--space-4);
+  padding: var(--space-2) var(--space-4);
   border: none;
   background: none;
   font-family: inherit;
-  font-size: 0.95rem;
+  font-size: 0.9rem;
   font-weight: 500;
   color: var(--color-texto-claro);
   cursor: pointer;
@@ -668,11 +922,60 @@ a:hover {
   margin-bottom: -2px;
   white-space: nowrap;
   min-height: var(--touch-min);
+  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+  transition: color 0.15s, background 0.15s;
+}
+
+.tab:hover:not(:disabled) {
+  color: var(--color-principal);
+  background: rgba(var(--color-principal-rgb), 0.05);
 }
 
 .tab.active {
   color: var(--color-principal);
   border-bottom-color: var(--color-secundario);
+}
+
+.tab.disabled,
+.tab:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.form-section-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--color-principal);
+  margin: 0;
+  grid-column: 1 / -1;
+}
+
+.form-section-title--first {
+  margin-bottom: var(--space-1);
+}
+
+.form-section-title--divider {
+  margin-top: var(--space-2);
+  padding-top: var(--space-5);
+  border-top: 1px solid rgba(var(--color-principal-rgb), 0.12);
+}
+
+.info-box {
+  padding: var(--space-3) var(--space-4);
+  background: rgba(var(--color-principal-rgb), 0.08);
+  border-radius: var(--radius-md);
+  color: var(--color-texto);
+  font-size: 0.9rem;
+}
+
+.badge-danger {
+  background: rgba(217, 83, 79, 0.15);
+  color: #a13835;
+}
+
+.badge-default {
+  background: rgba(var(--color-principal-rgb), 0.1);
+  color: var(--color-principal);
 }
 
 /* Login */
@@ -706,6 +1009,21 @@ a:hover {
   letter-spacing: 0.06em;
   text-transform: uppercase;
   margin-bottom: var(--space-6);
+}
+
+.login-dev-hint {
+  text-align: center;
+  color: var(--color-texto-claro);
+  font-size: 0.8rem;
+  margin: calc(-1 * var(--space-4)) 0 var(--space-6);
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  background: rgba(var(--color-principal-rgb), 0.08);
+  border: 1px solid rgba(var(--color-principal-rgb), 0.2);
+}
+
+.login-dev-hint strong {
+  color: var(--color-texto);
 }
 
 /* Spinner */
@@ -807,7 +1125,7 @@ a:hover {
 /* Toast */
 .toast-container {
   position: fixed;
-  bottom: calc(var(--nav-bottom-height) + var(--space-3));
+  bottom: var(--space-4);
   left: 50%;
   transform: translateX(-50%);
   z-index: 400;
@@ -1029,4 +1347,634 @@ a:hover {
   font-size: 4rem;
   color: var(--color-principal);
   opacity: 0.4;
+}
+
+/* Odontograma */
+.odontograma-panel-header {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--space-4);
+}
+
+.odontograma-layout {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.odontograma-chart-card,
+.odontograma-editor-card {
+  background: var(--color-superficie);
+  border: 1px solid rgba(var(--color-principal-rgb), 0.1);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.odontograma-chart {
+  min-width: 0;
+  width: 100%;
+}
+
+.odontograma-chart-body {
+  width: 100%;
+  overflow: visible;
+  padding: var(--space-3) var(--space-4);
+  box-sizing: border-box;
+}
+
+.odontograma-boca {
+  width: 100%;
+  max-width: 100%;
+}
+
+.odontograma-arco {
+  width: 100%;
+}
+
+.odontograma-fila {
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+  gap: var(--space-2);
+  width: 100%;
+}
+
+.odontograma-mitad {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.odontograma-cuadrante {
+  display: flex;
+  gap: clamp(1px, 0.25vw, 3px);
+  width: 100%;
+  min-width: 0;
+}
+
+.odontograma-cuadrante.invertido {
+  flex-direction: row-reverse;
+}
+
+.odontograma-cuadrante.alinear-stretch {
+  justify-content: space-between;
+}
+
+/* Primarias ancladas a la línea media del odontograma */
+.odontograma-cuadrante.alinear-midline-end {
+  justify-content: flex-end;
+}
+
+.odontograma-cuadrante.alinear-midline-start {
+  justify-content: flex-start;
+}
+
+.odontograma-cuadrante.cuadrante-primaria {
+  gap: clamp(1px, 0.2vw, 2px);
+}
+
+.odontograma-cuadrante.cuadrante-permanente .pieza-schematic-wrap {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.odontograma-cuadrante.cuadrante-primaria .pieza-schematic-wrap {
+  flex: 0 0 auto;
+}
+
+.odontograma-divisor.vertical {
+  width: 2px;
+  background: rgba(var(--color-principal-rgb), 0.2);
+  margin: 0 var(--space-1);
+  align-self: stretch;
+  flex-shrink: 0;
+}
+
+.odontograma-divisor.horizontal {
+  height: 2px;
+  background: rgba(var(--color-principal-rgb), 0.2);
+  margin: var(--space-4) auto;
+  max-width: 90%;
+}
+
+.odontograma-pieza {
+  width: 44px;
+  min-height: 58px;
+  border: 2px solid rgba(var(--color-principal-rgb), 0.2);
+  border-radius: var(--radius-sm);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  padding: 5px 3px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: border-color 0.15s, box-shadow 0.15s, transform 0.1s;
+  flex-shrink: 0;
+}
+
+/* Esquema de 5 caras por pieza */
+.pieza-schematic-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 3px;
+  margin: 1px;
+  border-radius: var(--radius-sm);
+  --cara-size: clamp(11px, 1.15vw, 16px);
+}
+
+.pieza-schematic-wrap--primaria {
+  --cara-size: clamp(10px, 1vw, 14px);
+}
+
+.pieza-schematic-wrap.selected .pieza-schematic {
+  border-color: #1a1a1a;
+  border-width: 2px;
+  box-shadow: none;
+}
+
+.pieza-schematic-wrap.ausente-patologica .pieza-cara,
+.pieza-schematic-wrap.ausente-fisiologica .pieza-cara {
+  opacity: 0.5;
+}
+
+.pieza-schematic {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  border: 2px solid rgba(var(--color-principal-rgb), 0.35);
+  border-radius: 4px;
+  padding: 2px;
+  background: var(--color-blanco);
+  transition: border-color 0.15s;
+  position: relative;
+  cursor: pointer;
+}
+
+/* Ausente patológica: cruz roja */
+.pieza-schematic-wrap.ausente-patologica .pieza-schematic::before,
+.pieza-schematic-wrap.ausente-patologica .pieza-schematic::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 8%;
+  width: 84%;
+  height: 2px;
+  background: #dc3545;
+  pointer-events: none;
+  z-index: 2;
+  border-radius: 1px;
+}
+
+.pieza-schematic-wrap.ausente-patologica .pieza-schematic::before {
+  transform: translateY(-50%) rotate(45deg);
+}
+
+.pieza-schematic-wrap.ausente-patologica .pieza-schematic::after {
+  transform: translateY(-50%) rotate(-45deg);
+}
+
+/* Ausente fisiológica: dos líneas paralelas azules */
+.pieza-schematic-wrap.ausente-fisiologica .pieza-schematic::before,
+.pieza-schematic-wrap.ausente-fisiologica .pieza-schematic::after {
+  content: '';
+  position: absolute;
+  left: 12%;
+  width: 76%;
+  height: 2px;
+  background: #0d6efd;
+  pointer-events: none;
+  z-index: 2;
+  border-radius: 1px;
+}
+
+.pieza-schematic-wrap.ausente-fisiologica .pieza-schematic::before {
+  top: 36%;
+}
+
+.pieza-schematic-wrap.ausente-fisiologica .pieza-schematic::after {
+  top: 58%;
+}
+
+.pieza-schematic-middle {
+  display: flex;
+  gap: 1px;
+}
+
+.pieza-cara {
+  width: var(--cara-size);
+  height: calc(var(--cara-size) * 0.82);
+  border: 1px solid rgba(var(--color-principal-rgb), 0.25);
+  border-radius: 2px;
+  background: var(--pieza-estado-color, #f8faf8);
+  cursor: pointer;
+  padding: 0;
+  transition: background 0.12s, border-color 0.12s;
+  flex-shrink: 0;
+  outline: none;
+}
+
+.pieza-cara:focus,
+.pieza-cara:focus-visible {
+  outline: none;
+}
+
+.pieza-cara:hover:not(:disabled) {
+  border-color: var(--color-principal);
+}
+
+.pieza-cara.activa {
+  border-color: #dc3545;
+  background: rgba(220, 53, 69, 0.75) !important;
+}
+
+.pieza-cara:disabled {
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.pieza-cara-O {
+  width: var(--cara-size);
+  height: var(--cara-size);
+}
+
+.pieza-schematic-num {
+  border: none;
+  background: none;
+  font-family: inherit;
+  font-size: clamp(0.55rem, 0.9vw, 0.68rem);
+  font-weight: 700;
+  color: var(--color-principal);
+  cursor: pointer;
+  padding: 1px 2px;
+  border-radius: var(--radius-sm);
+  line-height: 1;
+  outline: none;
+}
+
+.pieza-schematic-num:hover {
+  background: rgba(var(--color-principal-rgb), 0.08);
+}
+
+.odontograma-toolbar-hint {
+  margin: 0 0 var(--space-4);
+  font-size: 0.8rem;
+  color: var(--color-texto-claro);
+}
+
+/* Resumen clínico (ficha paciente) */
+.resumen-clinico {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-3);
+  margin-bottom: var(--space-5);
+}
+
+.resumen-clinico--loading {
+  padding: var(--space-4);
+  background: var(--color-superficie);
+  border-radius: var(--radius-md);
+}
+
+.resumen-clinico-card {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border: 1px solid rgba(var(--color-principal-rgb), 0.15);
+  border-left: 4px solid var(--color-principal);
+  border-radius: var(--radius-md);
+  background: var(--color-superficie);
+  cursor: pointer;
+  text-align: left;
+  font-family: inherit;
+  transition: box-shadow 0.15s, border-color 0.15s, background 0.15s;
+  min-height: 80px;
+}
+
+.resumen-clinico-card:hover {
+  box-shadow: var(--shadow-sm);
+  background: var(--color-blanco);
+  border-color: rgba(var(--color-principal-rgb), 0.28);
+}
+
+.resumen-clinico-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.resumen-clinico-titulo {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-principal);
+  margin-bottom: var(--space-1);
+}
+
+.resumen-clinico-vacio {
+  font-size: 0.9rem;
+  color: var(--color-texto-claro);
+  font-style: italic;
+}
+
+.resumen-clinico-lista {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.resumen-clinico-lista li {
+  font-size: 0.88rem;
+  color: var(--color-texto);
+  line-height: 1.4;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.resumen-clinico-mas {
+  color: var(--color-texto-claro) !important;
+  font-size: 0.8rem !important;
+}
+
+.odontograma-pieza:hover {
+  border-color: var(--color-principal);
+  transform: translateY(-1px);
+}
+
+.odontograma-pieza.selected {
+  border-color: var(--color-secundario);
+  box-shadow: 0 0 0 3px rgba(var(--color-secundario-rgb), 0.3);
+}
+
+.odontograma-pieza.ausente {
+  opacity: 0.5;
+  text-decoration: line-through;
+}
+
+.odontograma-pieza-num {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--color-principal);
+}
+
+.odontograma-superficies-mini {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1px;
+  justify-content: center;
+  max-width: 36px;
+}
+
+.odontograma-sup-dot {
+  font-size: 0.45rem;
+  font-weight: 600;
+  color: rgba(var(--color-principal-rgb), 0.35);
+  line-height: 1;
+}
+
+.odontograma-sup-dot.active {
+  color: var(--color-error);
+}
+
+.odontograma-leyenda {
+  margin-top: var(--space-5);
+  padding-top: var(--space-4);
+  border-top: 1px solid rgba(var(--color-principal-rgb), 0.1);
+}
+
+.odontograma-leyenda-titulo {
+  display: block;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-texto-claro);
+  margin-bottom: var(--space-3);
+}
+
+.odontograma-leyenda-grupos {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.odontograma-leyenda-grupo-titulo {
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 700;
+  margin-bottom: var(--space-2);
+}
+
+.odontograma-leyenda-grupo-titulo--patologia {
+  color: #dc3545;
+}
+
+.odontograma-leyenda-grupo-titulo--fisiologia {
+  color: #0d6efd;
+}
+
+.odontograma-leyenda-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+  gap: var(--space-2) var(--space-4);
+}
+
+.odontograma-leyenda-item {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.78rem;
+  color: var(--color-texto-claro);
+}
+
+.odontograma-leyenda-color {
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  flex-shrink: 0;
+}
+
+.odontograma-leyenda-marca {
+  width: 14px;
+  height: 14px;
+  border-radius: 2px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  background: var(--color-blanco);
+  flex-shrink: 0;
+  position: relative;
+}
+
+.odontograma-leyenda-marca--cruz::before,
+.odontograma-leyenda-marca--cruz::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 15%;
+  width: 70%;
+  height: 1.5px;
+  background: #dc3545;
+}
+
+.odontograma-leyenda-marca--cruz::before {
+  transform: translateY(-50%) rotate(45deg);
+}
+
+.odontograma-leyenda-marca--cruz::after {
+  transform: translateY(-50%) rotate(-45deg);
+}
+
+.odontograma-leyenda-marca--paralelas::before,
+.odontograma-leyenda-marca--paralelas::after {
+  content: '';
+  position: absolute;
+  left: 18%;
+  width: 64%;
+  height: 1.5px;
+  background: #0d6efd;
+}
+
+.odontograma-leyenda-marca--paralelas::before {
+  top: 35%;
+}
+
+.odontograma-leyenda-marca--paralelas::after {
+  top: 58%;
+}
+
+.odontograma-editor-card {
+  min-height: 280px;
+  display: flex;
+  flex-direction: column;
+}
+
+.odontograma-editor {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  flex: 1;
+}
+
+.odontograma-editor-placeholder {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: var(--space-3);
+  padding: var(--space-6) var(--space-4);
+  color: var(--color-texto-claro);
+  font-size: 0.9rem;
+}
+
+.odontograma-editor-placeholder-icon {
+  font-size: 2rem;
+  opacity: 0.6;
+}
+
+.odontograma-editor-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.odontograma-editor-title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--color-principal);
+}
+
+.odontograma-editor-fields {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.odontograma-editor-cerrar {
+  border: none;
+  background: rgba(var(--color-principal-rgb), 0.08);
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-full);
+  font-size: 1.25rem;
+  line-height: 1;
+  cursor: pointer;
+  color: var(--color-texto-claro);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.odontograma-superficies-toggles {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-2);
+}
+
+.odontograma-sup-toggle {
+  padding: 0.45rem 0.5rem;
+  border: 1px solid rgba(var(--color-principal-rgb), 0.2);
+  border-radius: var(--radius-md);
+  background: var(--color-blanco);
+  font-family: inherit;
+  font-size: 0.78rem;
+  cursor: pointer;
+  text-align: center;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.odontograma-sup-toggle.active {
+  background: var(--color-principal);
+  color: white;
+  border-color: var(--color-principal);
+}
+
+@media (max-width: 900px) {
+  .odontograma-editor-card {
+    min-height: auto;
+  }
+}
+
+@media (max-width: 640px) {
+  .ficha-tab-group {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .ficha-tab-group-label {
+    min-width: unset;
+  }
+
+  .odontograma-pieza {
+    width: 36px;
+    min-height: 50px;
+  }
+
+  .odontograma-pieza-num {
+    font-size: 0.62rem;
+  }
+
+  .odontograma-superficies-toggles {
+    grid-template-columns: 1fr;
+  }
+
+  .resumen-clinico {
+    grid-template-columns: 1fr;
+  }
 }

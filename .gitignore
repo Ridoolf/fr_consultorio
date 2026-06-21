@@ -13,6 +13,7 @@ frontend/.env
 # Env
 .env
 .env.local
+backend/.env
 
 # VS Code
 .vscode/
