@@ -37,6 +37,8 @@ ALLOWED_HOSTS = [
     if h.strip()
 ]
 
+PACIENTES_APP = 'pacientes.apps.PacientesConfig'
+
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -47,7 +49,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework_simplejwt',
     'corsheaders',
-    'pacientes.apps.PacientesConfig',
+    PACIENTES_APP,
     'turnos',
     'caja',
 ]
@@ -157,7 +159,7 @@ if CLOUDINARY_CLOUD_NAME and CLOUDINARY_API_KEY and CLOUDINARY_API_SECRET:
         api_secret=CLOUDINARY_API_SECRET,
         secure=True,
     )
-    INSTALLED_APPS.insert(INSTALLED_APPS.index('pacientes'), 'cloudinary_storage')
+    INSTALLED_APPS.insert(INSTALLED_APPS.index(PACIENTES_APP), 'cloudinary_storage')
     DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
 
 if not DEBUG:
