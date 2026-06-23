@@ -1762,10 +1762,18 @@ a:hover {
 }
 
 .odontograma-chart-scroll .odontograma-chart-body {
-  min-width: 680px;
+  min-width: 1180px;
   width: max-content;
   max-width: none;
   padding: var(--space-3) 0;
+}
+
+.odontograma-chart-scroll .pieza-schematic-wrap {
+  --cara-size: 14px;
+}
+
+.odontograma-chart-scroll .pieza-schematic-wrap--primaria {
+  --cara-size: 12px;
 }
 
 .odontograma-chart-scroll .odontograma-mitad {
@@ -1777,7 +1785,7 @@ a:hover {
   flex: 0 0 auto;
 }
 
-@media (min-width: 900px) {
+@media (min-width: 1300px) {
   .odontograma-chart-scroll-hint {
     display: none;
   }
@@ -1796,6 +1804,15 @@ a:hover {
     min-width: 0;
     width: 100%;
     padding: var(--space-3) var(--space-4);
+  }
+
+  .odontograma-chart-scroll .odontograma-mitad {
+    flex: 1;
+  }
+
+  .odontograma-chart-scroll .odontograma-cuadrante.cuadrante-permanente .pieza-schematic-wrap {
+    flex: 1 1 0;
+    min-width: 0;
   }
 }
 
