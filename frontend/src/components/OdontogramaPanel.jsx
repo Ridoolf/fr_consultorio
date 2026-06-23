@@ -2,10 +2,14 @@ import { useEffect, useState } from 'react';
 import { odontogramaAPI } from '../services/api';
 import { getErrorMessage } from '../utils/errors';
 import { useToast } from '../context/ToastContext';
+import { useMediaQuery } from '../hooks/useMediaQuery';
 import { normalizarPiezas, piezaConNumero, piezaVacia } from '../utils/odontograma';
 import Button from './ui/Button';
 import Spinner from './ui/Spinner';
 import OdontogramaChart, { OdontogramaPiezaEditor } from './OdontogramaChart';
+import OdontogramaPiezaPicker from './OdontogramaPiezaPicker';
+
+const MODO_LISTA_QUERY = '(max-width: 979px)';
 
 function OdontogramaPanel({ pacienteId }) {
   const [odontogramaId, setOdontogramaId] = useState(null);
@@ -15,6 +19,7 @@ function OdontogramaPanel({ pacienteId }) {
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState(null);
   const { showToast } = useToast();
+  const modoLista = useMediaQuery(MODO_LISTA_QUERY);
 
   const cargarOdontograma = async () => {
     setCargando(true);
@@ -77,7 +82,11 @@ function OdontogramaPanel({ pacienteId }) {
       <div className="odontograma-panel-header">
         <div>
           <h3 className="ficha-subpanel-title">Odontograma</h3>
-          <p className="ficha-subpanel-desc">Clic en una cara del gráfico para marcarla y abrir el editor de la pieza.</p>
+          <p className="ficha-subpanel-desc">
+            {modoLista
+              ? 'Elegí una pieza de la lista para editar estado, superficies y nota.'
+              : 'Clic en una cara del gráfico para marcarla y abrir el editor de la pieza.'}
+          </p>
         </div>
         <Button type="button" variant="primary" disabled={guardando} onClick={handleGuardar}>
           {guardando ? 'Guardando...' : 'Guardar odontograma'}
@@ -86,15 +95,25 @@ function OdontogramaPanel({ pacienteId }) {
 
       {error && <div className="error-box">{error}</div>}
 
-      <div className="odontograma-layout">
-        <div className="odontograma-chart-card">
-          <OdontogramaChart
-            piezas={piezas}
-            piezaSeleccionada={piezaSeleccionada}
-            onSelectPieza={setPiezaSeleccionada}
-            onToggleSuperficie={handleToggleSuperficie}
-          />
-        </div>
+      <div className={`odontograma-layout${modoLista ? ' odontograma-layout--lista' : ''}`}>
+        {modoLista ? (
+          <div className="odontograma-lista-card">
+            <OdontogramaPiezaPicker
+              piezas={piezas}
+              piezaSeleccionada={piezaSeleccionada}
+              onSelectPieza={setPiezaSeleccionada}
+            />
+          </div>
+        ) : (
+          <div className="odontograma-chart-card">
+            <OdontogramaChart
+              piezas={piezas}
+              piezaSeleccionada={piezaSeleccionada}
+              onSelectPieza={setPiezaSeleccionada}
+              onToggleSuperficie={handleToggleSuperficie}
+            />
+          </div>
+        )}
 
         <div className="odontograma-editor-card">
           {piezaSeleccionada ? (
@@ -106,7 +125,11 @@ function OdontogramaPanel({ pacienteId }) {
           ) : (
             <div className="odontograma-editor-placeholder">
               <span className="odontograma-editor-placeholder-icon">🦷</span>
-              <p>Seleccioná una cara en el gráfico para editar la pieza (estado general, superficies y nota).</p>
+              <p>
+                {modoLista
+                  ? 'Tocá un número de la lista para editar esa pieza.'
+                  : 'Seleccioná una cara en el gráfico para editar la pieza (estado general, superficies y nota).'}
+              </p>
             </div>
           )}
         </div>
