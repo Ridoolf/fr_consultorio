@@ -93,14 +93,12 @@ function OdontogramaPanel({ pacienteId }) {
           <p className="odontograma-chart-scroll-hint" aria-hidden="true">
             Deslizá horizontalmente para ver todo el odontograma
           </p>
-          <div className="odontograma-chart-scroll">
-            <OdontogramaChart
-              piezas={piezas}
-              piezaSeleccionada={piezaSeleccionada}
-              onSelectPieza={setPiezaSeleccionada}
-              onToggleSuperficie={handleToggleSuperficie}
-            />
-          </div>
+          <OdontogramaChart
+            piezas={piezas}
+            piezaSeleccionada={piezaSeleccionada}
+            onSelectPieza={setPiezaSeleccionada}
+            onToggleSuperficie={handleToggleSuperficie}
+          />
         </div>
 
         <div className="odontograma-editor-card">

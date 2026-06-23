@@ -66,30 +66,34 @@ function OdontogramaChart({ piezas, piezaSeleccionada, onSelectPieza, onToggleSu
         Dentición mixta: permanente y primaria. Clic en la pieza o en una cara para seleccionarla; en una cara también se marca la superficie.
       </p>
 
-      <div className="odontograma-chart-body">
-        <div className="odontograma-boca">
-          {ARCOS_ODONTOGRAMA.map((arco, idx) => (
-            <div key={arco.id} className={`odontograma-arco odontograma-arco--${arco.id}`}>
-              {idx > 0 && <div className="odontograma-divisor horizontal" aria-hidden />}
-              <div className="odontograma-fila">
-                <MitadBoca
-                  mitad={arco.mitades[0]}
-                  piezas={piezas}
-                  piezaSeleccionada={piezaSeleccionada}
-                  onSelectPieza={onSelectPieza}
-                  onToggleSuperficie={onToggleSuperficie}
-                />
-                <div className="odontograma-divisor vertical" aria-hidden />
-                <MitadBoca
-                  mitad={arco.mitades[1]}
-                  piezas={piezas}
-                  piezaSeleccionada={piezaSeleccionada}
-                  onSelectPieza={onSelectPieza}
-                  onToggleSuperficie={onToggleSuperficie}
-                />
-              </div>
+      <div className="odontograma-chart-scroll">
+        <div className="odontograma-chart-scroll-content">
+          <div className="odontograma-chart-body">
+            <div className="odontograma-boca">
+              {ARCOS_ODONTOGRAMA.map((arco, idx) => (
+                <div key={arco.id} className={`odontograma-arco odontograma-arco--${arco.id}`}>
+                  {idx > 0 && <div className="odontograma-divisor horizontal" aria-hidden />}
+                  <div className="odontograma-fila">
+                    <MitadBoca
+                      mitad={arco.mitades[0]}
+                      piezas={piezas}
+                      piezaSeleccionada={piezaSeleccionada}
+                      onSelectPieza={onSelectPieza}
+                      onToggleSuperficie={onToggleSuperficie}
+                    />
+                    <div className="odontograma-divisor vertical" aria-hidden />
+                    <MitadBoca
+                      mitad={arco.mitades[1]}
+                      piezas={piezas}
+                      piezaSeleccionada={piezaSeleccionada}
+                      onSelectPieza={onSelectPieza}
+                      onToggleSuperficie={onToggleSuperficie}
+                    />
+                  </div>
+                </div>
+              ))}
             </div>
-          ))}
+          </div>
         </div>
       </div>
 
