@@ -1763,6 +1763,11 @@ a:hover {
   min-width: 700px;
 }
 
+.odontograma-chart-scroll .odontograma-chart-body {
+  padding-left: var(--space-6);
+  padding-right: var(--space-5);
+}
+
 .odontograma-chart-scroll .odontograma-mitad {
   flex: 0 0 auto;
   min-width: 0;
