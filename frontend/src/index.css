@@ -1727,249 +1727,6 @@ a:hover {
   gap: var(--space-5);
 }
 
-.odontograma-layout--lista .odontograma-editor-card {
-  flex-shrink: 0;
-}
-
-.odontograma-mobile-card {
-  background: var(--color-superficie);
-  border: 1px solid rgba(var(--color-principal-rgb), 0.1);
-  border-radius: var(--radius-md);
-  padding: var(--space-4);
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-4);
-}
-
-.odontograma-mobile-nav {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-2);
-  padding-top: var(--space-2);
-  border-top: 1px solid rgba(var(--color-principal-rgb), 0.1);
-}
-
-.odontograma-mobile-nav-pieza {
-  font-weight: 700;
-  font-size: 1rem;
-  color: var(--color-principal);
-}
-
-.odontograma-mobile-hint {
-  margin: 0;
-  padding: var(--space-4);
-  text-align: center;
-  color: var(--color-texto-claro);
-  font-size: 0.9rem;
-  background: rgba(var(--color-principal-rgb), 0.04);
-  border-radius: var(--radius-md);
-}
-
-.odontograma-lista-card {
-  background: var(--color-superficie);
-  border: 1px solid rgba(var(--color-principal-rgb), 0.1);
-  border-radius: var(--radius-md);
-  padding: var(--space-4);
-  width: 100%;
-  min-width: 0;
-  box-sizing: border-box;
-}
-
-.odontograma-lista-hallazgos {
-  margin-bottom: var(--space-4);
-  padding-bottom: var(--space-4);
-  border-bottom: 1px solid rgba(var(--color-principal-rgb), 0.1);
-}
-
-.odontograma-lista-hallazgos-titulo {
-  display: block;
-  font-size: 0.6875rem;
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--color-texto-claro);
-  margin-bottom: var(--space-2);
-}
-
-.odontograma-lista-chips {
-  display: flex;
-  flex-wrap: nowrap;
-  gap: var(--space-2);
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-  padding-bottom: var(--space-1);
-}
-
-.odontograma-lista-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-2);
-  max-width: 100%;
-  padding: var(--space-2) var(--space-3);
-  border: 1px solid rgba(var(--color-principal-rgb), 0.2);
-  border-radius: var(--radius-full);
-  background: var(--color-blanco);
-  font-family: inherit;
-  font-size: 0.8125rem;
-  cursor: pointer;
-  transition: border-color 0.15s ease, background 0.15s ease;
-}
-
-.odontograma-lista-chip:hover {
-  border-color: var(--color-principal);
-}
-
-.odontograma-lista-chip.active {
-  border-color: var(--color-principal);
-  background: rgba(var(--color-principal-rgb), 0.08);
-}
-
-.odontograma-lista-chip-num {
-  font-weight: 700;
-  color: var(--color-principal);
-}
-
-.odontograma-lista-chip-resumen {
-  color: var(--color-texto-claro);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.odontograma-lista-busqueda {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-}
-
-.odontograma-lista-busqueda-row {
-  display: flex;
-  gap: var(--space-2);
-  align-items: stretch;
-}
-
-.odontograma-lista-busqueda-row .form-input {
-  flex: 1;
-  min-width: 0;
-}
-
-.odontograma-lista-busqueda-row .btn {
-  flex-shrink: 0;
-  min-width: 3.5rem;
-}
-
-.odontograma-lista-sugerencias {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2);
-}
-
-.odontograma-lista-sugerencia {
-  min-height: 36px;
-  padding: 0 var(--space-3);
-  border: 1px solid rgba(var(--color-principal-rgb), 0.2);
-  border-radius: var(--radius-full);
-  background: var(--color-blanco);
-  font-family: inherit;
-  font-weight: 600;
-  font-size: 0.9rem;
-  color: var(--color-principal);
-  cursor: pointer;
-}
-
-.odontograma-lista-tabs {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: var(--space-1);
-}
-
-.odontograma-lista-tab {
-  min-height: var(--touch-min);
-  padding: var(--space-2) var(--space-1);
-  border: 1px solid rgba(var(--color-principal-rgb), 0.15);
-  border-radius: var(--radius-md);
-  background: var(--color-blanco);
-  font-family: inherit;
-  font-size: 0.7rem;
-  font-weight: 600;
-  color: var(--color-texto-claro);
-  cursor: pointer;
-  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
-}
-
-.odontograma-lista-tab.active {
-  background: rgba(var(--color-principal-rgb), 0.1);
-  border-color: var(--color-principal);
-  color: var(--color-principal);
-}
-
-.odontograma-lista-cuadrante {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
-}
-
-.odontograma-lista-fila-label {
-  display: block;
-  font-size: 0.6875rem;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--color-texto-claro);
-  margin-bottom: var(--space-2);
-}
-
-.odontograma-lista-grid {
-  display: grid;
-  gap: var(--space-2);
-}
-
-.odontograma-lista-grid--fila {
-  grid-template-columns: repeat(auto-fill, minmax(48px, 1fr));
-}
-
-.odontograma-lista-pieza {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: var(--touch-min);
-  padding: var(--space-2);
-  border: 2px solid rgba(var(--color-principal-rgb), 0.15);
-  border-radius: var(--radius-md);
-  background: linear-gradient(
-    180deg,
-    var(--pieza-estado-color, #f8faf8) 0%,
-    var(--color-blanco) 100%
-  );
-  font-family: inherit;
-  cursor: pointer;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.1s ease;
-}
-
-.odontograma-lista-pieza:hover {
-  border-color: rgba(var(--color-principal-rgb), 0.35);
-}
-
-.odontograma-lista-pieza.selected {
-  border-color: var(--color-secundario);
-  box-shadow: 0 0 0 2px rgba(var(--color-secundario-rgb), 0.35);
-}
-
-.odontograma-lista-pieza.marcada:not(.selected) {
-  border-color: rgba(var(--color-principal-rgb), 0.4);
-}
-
-.odontograma-lista-pieza.ausente {
-  opacity: 0.55;
-}
-
-.odontograma-lista-pieza-num {
-  font-size: 0.9375rem;
-  font-weight: 700;
-  color: var(--color-texto);
-}
-
 .odontograma-chart-card,
 .odontograma-editor-card {
   background: var(--color-superficie);
@@ -1979,6 +1736,46 @@ a:hover {
   width: 100%;
   min-width: 0;
   box-sizing: border-box;
+}
+
+.odontograma-chart-card {
+  overflow: hidden;
+}
+
+.odontograma-chart-scroll-hint {
+  margin: 0 0 var(--space-2);
+  font-size: 0.75rem;
+  color: var(--color-texto-claro);
+  text-align: center;
+}
+
+.odontograma-chart-scroll {
+  overflow-x: auto;
+  overflow-y: visible;
+  -webkit-overflow-scrolling: touch;
+  max-width: 100%;
+  margin: 0 calc(-1 * var(--space-4));
+  padding: 0 var(--space-4);
+}
+
+.odontograma-chart-scroll .odontograma-chart {
+  width: 100%;
+  min-width: 700px;
+}
+
+.odontograma-chart-scroll .odontograma-mitad {
+  flex: 0 0 auto;
+  min-width: 0;
+}
+
+.odontograma-chart-scroll .odontograma-cuadrante.cuadrante-permanente .pieza-schematic-wrap {
+  flex: 0 0 auto;
+}
+
+@media (min-width: 900px) {
+  .odontograma-chart-scroll-hint {
+    display: none;
+  }
 }
 
 .odontograma-chart {

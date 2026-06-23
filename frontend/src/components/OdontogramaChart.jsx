@@ -128,7 +128,7 @@ function OdontogramaChart({ piezas, piezaSeleccionada, onSelectPieza, onToggleSu
   );
 }
 
-export function OdontogramaPiezaEditor({ pieza, onChange, onCerrar, ocultarCerrar = false }) {
+export function OdontogramaPiezaEditor({ pieza, onChange, onCerrar }) {
   if (!pieza) return null;
 
   const ausente = esAusente(pieza.estado);
@@ -151,9 +151,7 @@ export function OdontogramaPiezaEditor({ pieza, onChange, onCerrar, ocultarCerra
     <div className="odontograma-editor">
       <div className="odontograma-editor-header">
         <h4 className="odontograma-editor-title">Pieza {pieza.numero}</h4>
-        {!ocultarCerrar && (
-          <button type="button" className="odontograma-editor-cerrar" onClick={onCerrar} aria-label="Cerrar">×</button>
-        )}
+        <button type="button" className="odontograma-editor-cerrar" onClick={onCerrar} aria-label="Cerrar">×</button>
       </div>
       <div className="odontograma-editor-fields">
         <div className="form-field">
