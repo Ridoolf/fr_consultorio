@@ -30,6 +30,7 @@
   --sidebar-text: rgba(255, 255, 255, 0.72);
   --sidebar-text-active: #fff;
   --header-height: 56px;
+  --nav-bottom-height: 64px;
   --content-padding-x: clamp(1rem, 2.5vw, 2rem);
   --content-padding-y: var(--space-5);
   --space-1: 0.25rem;
@@ -110,6 +111,24 @@ a:hover {
   margin-top: 2px;
 }
 
+.app-header-logout {
+  flex-shrink: 0;
+  background: rgba(255, 255, 255, 0.15);
+  border: none;
+  color: white;
+  padding: 0.4rem 0.9rem;
+  border-radius: var(--radius-full);
+  font-size: 0.85rem;
+  font-family: inherit;
+  cursor: pointer;
+  min-height: var(--touch-min);
+  transition: background 0.15s ease;
+}
+
+.app-header-logout:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+
 .app-content {
   padding: var(--content-padding-y) var(--content-padding-x);
   width: 100%;
@@ -126,6 +145,76 @@ a:hover {
 
 .app-main {
   width: 100%;
+}
+
+/* Navegación inferior (móvil) */
+.app-root--mobile-nav {
+  --sidebar-width: 0px;
+  min-height: var(--app-height);
+  display: flex;
+  flex-direction: column;
+}
+
+.app-content--with-bottom-nav {
+  flex: 1;
+  padding-bottom: calc(var(--nav-bottom-height) + var(--space-3) + env(safe-area-inset-bottom, 0px));
+}
+
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: calc(var(--nav-bottom-height) + env(safe-area-inset-bottom, 0px));
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  background: var(--color-blanco);
+  border-top: 1px solid rgba(var(--color-principal-rgb), 0.15);
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  z-index: 200;
+  padding-left: var(--space-1);
+  padding-right: var(--space-1);
+  box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.06);
+}
+
+.bottom-nav-link {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: var(--space-1) var(--space-1);
+  border-radius: var(--radius-md);
+  color: var(--color-texto-claro);
+  text-decoration: none;
+  font-size: 0.625rem;
+  font-weight: 500;
+  min-width: 52px;
+  min-height: var(--touch-min);
+  justify-content: center;
+  transition: color 0.2s, background 0.2s;
+}
+
+.bottom-nav-link:hover {
+  text-decoration: none;
+  background: rgba(var(--color-secundario-rgb), 0.15);
+}
+
+.bottom-nav-link.active {
+  color: var(--color-principal);
+  background: rgba(var(--color-principal-rgb), 0.1);
+}
+
+.bottom-nav-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.bottom-nav-icon svg {
+  width: 20px;
+  height: 20px;
 }
 
 /* Sidebar */
@@ -362,21 +451,12 @@ a:hover {
     font-size: 0.72rem;
   }
 
-  .sidebar-brand {
-    padding: var(--space-2) var(--space-2) var(--space-1);
-  }
-
-  .sidebar-brand-logo {
-    width: 36px;
-    height: 36px;
-  }
-
   .page {
     gap: var(--space-3);
   }
 
   .page--fab {
-    padding-bottom: calc(56px + var(--space-5));
+    padding-bottom: calc(var(--nav-bottom-height) + 56px + var(--space-5));
   }
 
   .card,
@@ -550,7 +630,7 @@ a:hover {
   }
 
   .btn-fab {
-    bottom: var(--space-3);
+    bottom: calc(var(--nav-bottom-height) + var(--space-3) + env(safe-area-inset-bottom, 0px));
     right: var(--space-3);
     width: 52px;
     height: 52px;

@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useMediaQuery } from '../hooks/useMediaQuery';
 import SidebarIcon from './ui/SidebarIcon';
 
 const SIDEBAR_STORAGE_KEY = 'sidebar-expanded';
-const MOBILE_BREAKPOINT = 768;
+const MOBILE_NAV_QUERY = '(max-width: 767px)';
 const STUDIO_NAME = 'Odontología & Ortodoncia';
 
 const navItems = [
@@ -36,35 +37,65 @@ function Layout({ children }) {
   const { logout, user } = useAuth();
   const location = useLocation();
   const title = getSectionTitle(location.pathname);
+  const mobileNav = useMediaQuery(MOBILE_NAV_QUERY);
   const [expanded, setExpanded] = useState(readStoredExpanded);
-  const [isMobile, setIsMobile] = useState(
-    () => typeof window !== 'undefined' && window.innerWidth < MOBILE_BREAKPOINT,
-  );
 
   useEffect(() => {
-    const onResize = () => setIsMobile(window.innerWidth < MOBILE_BREAKPOINT);
-    window.addEventListener('resize', onResize);
-    return () => window.removeEventListener('resize', onResize);
-  }, []);
-
-  useEffect(() => {
+    if (mobileNav) return;
     try {
       localStorage.setItem(SIDEBAR_STORAGE_KEY, String(expanded));
     } catch {
       /* ignore */
     }
-  }, [expanded]);
+  }, [expanded, mobileNav]);
 
   const toggleSidebar = useCallback(() => {
     setExpanded((prev) => !prev);
   }, []);
 
-  const showBackdrop = isMobile && expanded;
+  if (mobileNav) {
+    return (
+      <div className="app-root app-root--mobile-nav">
+        <header className="app-header">
+          <div>
+            <div className="app-header-title">{title}</div>
+            <div className="app-header-subtitle">
+              Consultorio Odontológico
+              {user?.username && ` · ${user.username}`}
+            </div>
+          </div>
+          <button type="button" className="app-header-logout" onClick={logout}>
+            Salir
+          </button>
+        </header>
+
+        <main className="app-content app-content--with-bottom-nav">
+          <section className="app-main">{children}</section>
+        </main>
+
+        <nav className="bottom-nav" aria-label="Navegación principal">
+          {navItems.map((item) => (
+            <NavLink
+              key={item.path}
+              to={item.path}
+              end={item.end}
+              className={({ isActive }) =>
+                `bottom-nav-link${isActive ? ' active' : ''}`
+              }
+            >
+              <span className="bottom-nav-icon">
+                <SidebarIcon name={item.icon} />
+              </span>
+              {item.label}
+            </NavLink>
+          ))}
+        </nav>
+      </div>
+    );
+  }
 
   return (
     <div className={`app-root${expanded ? ' app-root--sidebar-expanded' : ''}`}>
-      {showBackdrop && <div className="sidebar-backdrop" aria-hidden="true" />}
-
       <aside
         className={`sidebar${expanded ? ' sidebar--expanded' : ''}`}
         aria-label="Navegación principal"
