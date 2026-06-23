@@ -3,7 +3,7 @@ import { odontogramaAPI } from '../services/api';
 import { getErrorMessage } from '../utils/errors';
 import { useToast } from '../context/ToastContext';
 import { useMediaQuery } from '../hooks/useMediaQuery';
-import { normalizarPiezas, piezaConNumero, piezaVacia } from '../utils/odontograma';
+import { normalizarPiezas, piezaAnterior, piezaConNumero, piezaSiguiente, piezaVacia } from '../utils/odontograma';
 import Button from './ui/Button';
 import Spinner from './ui/Spinner';
 import OdontogramaChart, { OdontogramaPiezaEditor } from './OdontogramaChart';
@@ -84,7 +84,7 @@ function OdontogramaPanel({ pacienteId }) {
           <h3 className="ficha-subpanel-title">Odontograma</h3>
           <p className="ficha-subpanel-desc">
             {modoLista
-              ? 'Elegí una pieza de la lista para editar estado, superficies y nota.'
+              ? 'Buscá o elegí la pieza, editá abajo y usá Anterior/Siguiente para avanzar.'
               : 'Clic en una cara del gráfico para marcarla y abrir el editor de la pieza.'}
           </p>
         </div>
@@ -97,12 +97,46 @@ function OdontogramaPanel({ pacienteId }) {
 
       <div className={`odontograma-layout${modoLista ? ' odontograma-layout--lista' : ''}`}>
         {modoLista ? (
-          <div className="odontograma-lista-card">
+          <div className="odontograma-mobile-card">
             <OdontogramaPiezaPicker
               piezas={piezas}
               piezaSeleccionada={piezaSeleccionada}
               onSelectPieza={setPiezaSeleccionada}
             />
+
+            {piezaSeleccionada ? (
+              <>
+                <div className="odontograma-mobile-nav">
+                  <button
+                    type="button"
+                    className="btn btn-secondary btn-sm"
+                    disabled={!piezaAnterior(piezaSeleccionada)}
+                    onClick={() => setPiezaSeleccionada(piezaAnterior(piezaSeleccionada))}
+                  >
+                    ← Ant.
+                  </button>
+                  <span className="odontograma-mobile-nav-pieza">Pieza {piezaSeleccionada}</span>
+                  <button
+                    type="button"
+                    className="btn btn-secondary btn-sm"
+                    disabled={!piezaSiguiente(piezaSeleccionada)}
+                    onClick={() => setPiezaSeleccionada(piezaSiguiente(piezaSeleccionada))}
+                  >
+                    Sig. →
+                  </button>
+                </div>
+                <OdontogramaPiezaEditor
+                  pieza={piezaConNumero(piezaSeleccionada, piezas)}
+                  onChange={handleCambioPieza}
+                  onCerrar={() => setPiezaSeleccionada(null)}
+                  ocultarCerrar
+                />
+              </>
+            ) : (
+              <p className="odontograma-mobile-hint">
+                Elegí una pieza con la búsqueda, los chips o el cuadrante de arriba.
+              </p>
+            )}
           </div>
         ) : (
           <div className="odontograma-chart-card">
@@ -115,6 +149,7 @@ function OdontogramaPanel({ pacienteId }) {
           </div>
         )}
 
+        {!modoLista && (
         <div className="odontograma-editor-card">
           {piezaSeleccionada ? (
             <OdontogramaPiezaEditor
@@ -126,13 +161,12 @@ function OdontogramaPanel({ pacienteId }) {
             <div className="odontograma-editor-placeholder">
               <span className="odontograma-editor-placeholder-icon">🦷</span>
               <p>
-                {modoLista
-                  ? 'Tocá un número de la lista para editar esa pieza.'
-                  : 'Seleccioná una cara en el gráfico para editar la pieza (estado general, superficies y nota).'}
+                Seleccioná una cara en el gráfico para editar la pieza (estado general, superficies y nota).
               </p>
             </div>
           )}
         </div>
+        )}
       </div>
     </div>
   );

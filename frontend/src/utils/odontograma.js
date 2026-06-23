@@ -163,3 +163,26 @@ export function normalizarPiezas(piezas) {
 export function piezaConNumero(numero, piezas) {
   return { numero, ...(piezas[numero] || piezaVacia()) };
 }
+
+export function piezaTieneHallazgos(pieza) {
+  const datos = pieza || piezaVacia();
+  if (datos.estado && datos.estado !== 'sano') return true;
+  if (datos.nota?.trim()) return true;
+  return Object.values(datos.superficies || {}).some(Boolean);
+}
+
+export function indicePieza(numero) {
+  return TODAS_LAS_PIEZAS.indexOf(String(numero));
+}
+
+export function piezaAnterior(numero) {
+  const idx = indicePieza(numero);
+  if (idx <= 0) return null;
+  return TODAS_LAS_PIEZAS[idx - 1];
+}
+
+export function piezaSiguiente(numero) {
+  const idx = indicePieza(numero);
+  if (idx < 0 || idx >= TODAS_LAS_PIEZAS.length - 1) return null;
+  return TODAS_LAS_PIEZAS[idx + 1];
+}
