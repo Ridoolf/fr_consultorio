@@ -18,14 +18,29 @@
 
 ### Comandos Render
 
-**Build:**
+**Build** (cada deploy):
 ```bash
-pip install -r requirements.txt && python manage.py migrate && python manage.py collectstatic --noinput && python manage.py create_consultorio_user
+pip install -r requirements.txt && python manage.py migrate && python manage.py collectstatic --noinput
 ```
 
 **Start:**
 ```bash
-gunicorn config.wsgi:application
+gunicorn config.wsgi:application --bind 0.0.0.0:$PORT
+```
+
+**Health Check Path** (opcional, en Settings del servicio web):
+```
+/api/health/
+```
+
+**Primer deploy o reset de contraseña** (una sola vez, desde Shell de Render):
+```bash
+python manage.py create_consultorio_user
+```
+
+Para cambiar la contraseña de un usuario que ya existe:
+```bash
+python manage.py create_consultorio_user --reset-password
 ```
 
 ## Variables en Netlify (frontend)
