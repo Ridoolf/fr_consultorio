@@ -24,18 +24,51 @@ const emptyForm = () => ({
   notas: '',
 });
 
+function getTratamientoId(item) {
+  const t = item?.tratamiento;
+  if (t == null || t === '') return '';
+  if (typeof t === 'object') return String(t.id ?? '');
+  return String(t);
+}
+
+function calcularTotales(cantidad, precioUnitario) {
+  const cantidadNum = Math.max(1, Number(cantidad) || 1);
+  const precioNum = Number(precioUnitario) || 0;
+  const subtotal = Math.round(cantidadNum * precioNum * 100) / 100;
+  return { cantidad: cantidadNum, precio_unitario: precioNum, subtotal, monto_total: subtotal };
+}
+
+function buildPagoPayload(form) {
+  const { cantidad, precio_unitario, subtotal, monto_total } = calcularTotales(
+    form.cantidad,
+    form.precio_unitario,
+  );
+  return {
+    paciente: Number(form.paciente),
+    fecha: form.fecha,
+    monto_total,
+    medio: form.medio,
+    notas: form.notas || '',
+    items: [{
+      tratamiento: Number(form.tratamiento),
+      cantidad,
+      precio_unitario,
+      subtotal,
+    }],
+  };
+}
+
 function pagoToEditForm(pago) {
   const item = pago.items?.[0] || {};
-  const cantidad = item.cantidad || 1;
-  const precio = item.precio_unitario || '';
+  const totales = calcularTotales(item.cantidad || 1, item.precio_unitario ?? '');
   return {
     id: pago.id,
     paciente: String(pago.paciente),
     fecha: pago.fecha,
-    tratamiento: String(item.tratamiento || ''),
-    cantidad,
-    precio_unitario: precio,
-    monto_total: pago.monto_total,
+    tratamiento: getTratamientoId(item),
+    cantidad: totales.cantidad,
+    precio_unitario: totales.precio_unitario || item.precio_unitario || '',
+    monto_total: totales.monto_total,
     medio: pago.medio,
     notas: pago.notas || '',
   };
@@ -57,7 +90,6 @@ function CajaPage() {
   const [editError, setEditError] = useState(null);
   const [confirmDeletePago, setConfirmDeletePago] = useState(null);
   const { showToast } = useToast();
-
   const [form, setForm] = useState(emptyForm());
 
   const cargarPagos = async (f = filtros) => {
@@ -106,8 +138,8 @@ function CajaPage() {
     if (!t) return;
     setForm((prev) => {
       const precio = prev.precio_unitario || t.precio_base;
-      const cantidad = Number(prev.cantidad) || 1;
-      return { ...prev, precio_unitario: precio, monto_total: Number(precio) * cantidad };
+      const totales = calcularTotales(prev.cantidad, precio);
+      return { ...prev, precio_unitario: precio, ...totales };
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [form.tratamiento]);
@@ -117,9 +149,10 @@ function CajaPage() {
     setForm((prev) => {
       const nuevo = { ...prev, [name]: value };
       if (name === 'cantidad' || name === 'precio_unitario') {
-        const cantidad = Number(name === 'cantidad' ? value : nuevo.cantidad) || 1;
-        const precio = Number(name === 'precio_unitario' ? value : nuevo.precio_unitario) || 0;
-        nuevo.monto_total = cantidad * precio || '';
+        Object.assign(nuevo, calcularTotales(
+          name === 'cantidad' ? value : nuevo.cantidad,
+          name === 'precio_unitario' ? value : nuevo.precio_unitario,
+        ));
       }
       return nuevo;
     });
@@ -130,16 +163,16 @@ function CajaPage() {
     setEditForm((prev) => {
       const nuevo = { ...prev, [name]: value };
       if (name === 'cantidad' || name === 'precio_unitario') {
-        const cantidad = Number(name === 'cantidad' ? value : nuevo.cantidad) || 1;
-        const precio = Number(name === 'precio_unitario' ? value : nuevo.precio_unitario) || 0;
-        nuevo.monto_total = cantidad * precio || '';
+        Object.assign(nuevo, calcularTotales(
+          name === 'cantidad' ? value : nuevo.cantidad,
+          name === 'precio_unitario' ? value : nuevo.precio_unitario,
+        ));
       }
       if (name === 'tratamiento') {
         const t = tratamientosEdit.find((x) => x.id === Number(value));
         if (t) {
-          const cantidad = Number(nuevo.cantidad) || 1;
           nuevo.precio_unitario = t.precio_base;
-          nuevo.monto_total = Number(t.precio_base) * cantidad;
+          Object.assign(nuevo, calcularTotales(nuevo.cantidad, t.precio_base));
         }
       }
       return nuevo;
@@ -161,26 +194,14 @@ function CajaPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!form.tratamiento || !form.monto_total) {
+    if (!form.tratamiento || form.precio_unitario === '') {
       setError('Completá tratamiento y monto.');
       return;
     }
     setGuardando(true);
     setError(null);
     try {
-      await pagosAPI.create({
-        paciente: Number(form.paciente),
-        fecha: form.fecha,
-        monto_total: form.monto_total,
-        medio: form.medio,
-        notas: form.notas,
-        items: [{
-          tratamiento: Number(form.tratamiento),
-          cantidad: Number(form.cantidad) || 1,
-          precio_unitario: Number(form.precio_unitario) || 0,
-          subtotal: Number(form.monto_total) || 0,
-        }],
-      });
+      await pagosAPI.create(buildPagoPayload(form));
       showToast('Cobro registrado', 'success');
       await cargarPagos(filtros);
       setForm({ ...emptyForm(), fecha: form.fecha });
@@ -194,42 +215,34 @@ function CajaPage() {
 
   const abrirEditar = async (pago) => {
     setEditError(null);
+    let lista = tratamientos;
     try {
       const res = await tratamientosAPI.getAll({ activos: 'false' });
-      setTratamientosEdit(res.data);
+      lista = res.data;
     } catch {
-      setTratamientosEdit(tratamientos);
+      /* usar activos */
     }
+    setTratamientosEdit(lista);
     setEditForm(pagoToEditForm(pago));
   };
 
   const handleEditSubmit = async (e) => {
     e.preventDefault();
-    if (!editForm?.tratamiento || !editForm?.monto_total) {
+    if (!editForm?.tratamiento || editForm?.precio_unitario === '') {
       setEditError('Completá tratamiento y monto.');
       return;
     }
     setGuardando(true);
     setEditError(null);
     try {
-      await pagosAPI.update(editForm.id, {
-        paciente: Number(editForm.paciente),
-        fecha: editForm.fecha,
-        monto_total: editForm.monto_total,
-        medio: editForm.medio,
-        notas: editForm.notas,
-        items: [{
-          tratamiento: Number(editForm.tratamiento),
-          cantidad: Number(editForm.cantidad) || 1,
-          precio_unitario: Number(editForm.precio_unitario) || 0,
-          subtotal: Number(editForm.monto_total) || 0,
-        }],
-      });
+      await pagosAPI.update(editForm.id, buildPagoPayload(editForm));
       showToast('Cobro actualizado', 'success');
       setEditForm(null);
       await cargarPagos(filtros);
     } catch (err) {
-      setEditError(getErrorMessage(err, 'No se pudo actualizar el cobro.'));
+      const detalle = getErrorMessage(err, 'No se pudo actualizar el cobro.');
+      const status = err?.response?.status;
+      setEditError(status ? `${detalle} (error ${status})` : detalle);
     } finally {
       setGuardando(false);
     }
@@ -258,7 +271,6 @@ function CajaPage() {
   return (
     <div className="page">
       <PageHeader title="Caja" subtitle="Registrar cobros y ver pagos" />
-
       {error && <div className="error-box">{error}</div>}
 
       <Card>
@@ -266,7 +278,6 @@ function CajaPage() {
           <div className={`caja-step${paso === 1 ? ' active' : ''}`}>1. Paciente y fecha</div>
           <div className={`caja-step${paso === 2 ? ' active' : ''}`}>2. Detalle del cobro</div>
         </div>
-
         <form onSubmit={handleSubmit} className="form-grid">
           {paso === 1 && (
             <>
@@ -283,12 +294,9 @@ function CajaPage() {
                 <label className="form-label">Fecha</label>
                 <input type="date" name="fecha" className="form-input" value={form.fecha} onChange={handleChange} required />
               </div>
-              <Button type="button" variant="primary" onClick={() => validarPaso1() && setPaso(2)}>
-                Siguiente
-              </Button>
+              <Button type="button" variant="primary" onClick={() => validarPaso1() && setPaso(2)}>Siguiente</Button>
             </>
           )}
-
           {paso === 2 && (
             <>
               <div className="form-row-2">
@@ -297,9 +305,7 @@ function CajaPage() {
                   <select name="tratamiento" className="form-select" value={form.tratamiento} onChange={handleChange} required>
                     <option value="">Seleccionar...</option>
                     {tratamientos.map((t) => (
-                      <option key={t.id} value={t.id}>
-                        {t.nombre} (${Number(t.precio_base).toLocaleString('es-AR')})
-                      </option>
+                      <option key={t.id} value={t.id}>{t.nombre} (${Number(t.precio_base).toLocaleString('es-AR')})</option>
                     ))}
                   </select>
                 </div>
@@ -324,9 +330,7 @@ function CajaPage() {
               </div>
               <div className="caja-total-box">
                 <div className="caja-total-label">Total a cobrar</div>
-                <div className="caja-total-value">
-                  ${Number(form.monto_total || 0).toLocaleString('es-AR')}
-                </div>
+                <div className="caja-total-value">${Number(form.monto_total || 0).toLocaleString('es-AR')}</div>
               </div>
               <div className="form-field">
                 <label className="form-label">Notas</label>
@@ -334,9 +338,7 @@ function CajaPage() {
               </div>
               <div className="form-actions">
                 <Button type="button" variant="secondary" onClick={() => setPaso(1)}>Atrás</Button>
-                <Button type="submit" variant="primary" disabled={guardando}>
-                  {guardando ? 'Guardando...' : 'Registrar cobro'}
-                </Button>
+                <Button type="submit" variant="primary" disabled={guardando}>{guardando ? 'Guardando...' : 'Registrar cobro'}</Button>
               </div>
             </>
           )}
@@ -345,108 +347,40 @@ function CajaPage() {
 
       <Card>
         <h3 className="page-header-title" style={{ fontSize: '1.1rem', marginBottom: '0.25rem' }}>Pagos registrados</h3>
-        <p className="form-hint" style={{ marginBottom: '1rem' }}>
-          {filtros.fecha || filtros.paciente
-            ? 'Filtrando resultados. Dejá los campos vacíos para ver todos.'
-            : 'Mostrando todos los pagos de todos los pacientes.'}
-        </p>
         {errorPagos && <div className="error-box">{errorPagos}</div>}
-
         <div className="filters-bar">
           <div className="form-field" style={{ flex: '0 0 160px' }}>
-            <label className="form-label">
-              Fecha <span className="form-hint-inline">(opcional)</span>
-            </label>
-            <input
-              type="date"
-              className="form-input"
-              value={filtros.fecha}
-              onChange={(e) => setFiltros((p) => ({ ...p, fecha: e.target.value }))}
-            />
+            <label className="form-label">Fecha <span className="form-hint-inline">(opcional)</span></label>
+            <input type="date" className="form-input" value={filtros.fecha} onChange={(e) => setFiltros((p) => ({ ...p, fecha: e.target.value }))} />
           </div>
           <div className="form-field" style={{ flex: '1 1 220px' }}>
-            <PacienteCombobox
-              label={<>Paciente <span className="form-hint-inline">(opcional)</span></>}
-              pacientes={pacientes}
-              value={filtros.paciente}
-              onChange={(v) => setFiltros((p) => ({ ...p, paciente: v }))}
-              placeholder="Todos los pacientes"
-            />
+            <PacienteCombobox label={<>Paciente <span className="form-hint-inline">(opcional)</span></>} pacientes={pacientes} value={filtros.paciente} onChange={(v) => setFiltros((p) => ({ ...p, paciente: v }))} placeholder="Todos los pacientes" />
           </div>
-          {(filtros.fecha || filtros.paciente) && (
-            <Button
-              type="button"
-              variant="secondary"
-              onClick={() => setFiltros({ fecha: '', paciente: '' })}
-            >
-              Limpiar filtros
-            </Button>
-          )}
         </div>
-
-        {cargandoPagos ? (
-          <Spinner label="Cargando pagos..." />
-        ) : pagos.length === 0 ? (
-          <EmptyState
-            icon="💰"
-            title="Sin pagos"
-            description={
-              filtros.fecha || filtros.paciente
-                ? 'No hay pagos para esos filtros.'
-                : 'Todavía no hay pagos registrados.'
-            }
-          />
+        {cargandoPagos ? <Spinner label="Cargando pagos..." /> : pagos.length === 0 ? (
+          <EmptyState icon="💰" title="Sin pagos" description="No hay pagos para mostrar." />
         ) : (
           pagos.map((p) => (
             <div key={p.id} className="data-card">
               <div className="data-card-header">
                 <div>
-                  <Link to={`/pacientes/${p.paciente}`} className="data-card-title">
-                    {p.paciente_nombre_completo}
-                  </Link>
+                  <Link to={`/pacientes/${p.paciente}`} className="data-card-title">{p.paciente_nombre_completo}</Link>
                   <div className="data-card-meta">{p.fecha} · {p.medio}</div>
                 </div>
-                <strong style={{ color: 'var(--color-principal)', fontSize: '1.1rem' }}>
-                  ${Number(p.monto_total).toLocaleString('es-AR')}
-                </strong>
+                <strong style={{ color: 'var(--color-principal)', fontSize: '1.1rem' }}>${Number(p.monto_total).toLocaleString('es-AR')}</strong>
               </div>
-              <div className="data-card-meta">
-                {p.items?.[0]?.tratamiento_nombre || '-'}
-              </div>
+              <div className="data-card-meta">{p.items?.[0]?.tratamiento_nombre || '-'}</div>
               <div className="data-card-actions">
-                <Button size="sm" variant="secondary" onClick={() => abrirEditar(p)}>
-                  Editar
-                </Button>
-                <Button size="sm" variant="danger" onClick={() => setConfirmDeletePago(p)}>
-                  Eliminar
-                </Button>
+                <Button size="sm" variant="secondary" onClick={() => abrirEditar(p)}>Editar</Button>
+                <Button size="sm" variant="danger" onClick={() => setConfirmDeletePago(p)}>Eliminar</Button>
               </div>
             </div>
           ))
         )}
       </Card>
 
-      <PagoEditDialog
-        open={Boolean(editForm)}
-        form={editForm || {}}
-        pacientes={pacientes}
-        tratamientos={tratamientosEdit.length ? tratamientosEdit : tratamientos}
-        guardando={guardando}
-        error={editError}
-        onChange={handleEditChange}
-        onCancel={() => { setEditForm(null); setEditError(null); }}
-        onSubmit={handleEditSubmit}
-      />
-
-      <ConfirmDialog
-        open={Boolean(confirmDeletePago)}
-        title="Eliminar cobro"
-        message={`¿Eliminar el cobro de ${confirmDeletePago?.paciente_nombre_completo} por $${Number(confirmDeletePago?.monto_total || 0).toLocaleString('es-AR')}?`}
-        danger
-        confirmLabel="Eliminar"
-        onCancel={() => setConfirmDeletePago(null)}
-        onConfirm={() => confirmDeletePago && handleDeletePago(confirmDeletePago)}
-      />
+      <PagoEditDialog open={Boolean(editForm)} form={editForm || {}} pacientes={pacientes} tratamientos={tratamientosEdit.length ? tratamientosEdit : tratamientos} guardando={guardando} error={editError} onChange={handleEditChange} onCancel={() => { setEditForm(null); setEditError(null); }} onSubmit={handleEditSubmit} />
+      <ConfirmDialog open={Boolean(confirmDeletePago)} title="Eliminar cobro" message={`¿Eliminar el cobro de ${confirmDeletePago?.paciente_nombre_completo}?`} danger confirmLabel="Eliminar" onCancel={() => setConfirmDeletePago(null)} onConfirm={() => confirmDeletePago && handleDeletePago(confirmDeletePago)} />
     </div>
   );
 }

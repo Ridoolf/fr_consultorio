@@ -7,7 +7,7 @@
 | `SECRET_KEY` | (generar string aleatorio largo) | Sí |
 | `DEBUG` | `False` | Sí |
 | `ALLOWED_HOSTS` | `fr-consultorio-backend.onrender.com` | Sí |
-| `DATABASE_URL` | (auto desde Postgres de Render) | Sí |
+| `DATABASE_URL` | Connection string de **Neon** (`?sslmode=require`) | Sí |
 | `CORS_ALLOWED_ORIGINS` | `https://fr-consultorio.netlify.app` | Sí |
 | `TIME_ZONE` | `America/Argentina/Buenos_Aires` | Sí |
 | `CONSULTORIO_USER` | `consultorio` | Sí (primer deploy) |
