@@ -74,3 +74,47 @@ class MergeTratamientosLogicTests(TestCase):
         t2 = TratamientoTipo.objects.create(nombre='B', precio_base=10000)
         winner = _pick_winner([t1, t2])
         self.assertEqual(winner.id, t1.id)
+
+
+class PagoUpdateTests(TestCase):
+    def setUp(self):
+        User = get_user_model()
+        self.user = User.objects.create_user(username='test', password='test1234')
+        self.client = APIClient()
+        self.client.force_authenticate(user=self.user)
+        self.paciente = crear_paciente()
+        self.tratamiento = TratamientoTipo.objects.create(nombre='Consulta', precio_base=25000)
+        self.pago = Pago.objects.create(
+            paciente=self.paciente,
+            fecha='2026-03-01',
+            monto_total=25000,
+            medio='efectivo',
+        )
+        PagoItem.objects.create(
+            pago=self.pago,
+            tratamiento=self.tratamiento,
+            cantidad=1,
+            precio_unitario=25000,
+            subtotal=25000,
+        )
+
+    def test_update_pago_recalculates_totals(self):
+        response = self.client.put(f'/api/pagos/{self.pago.id}/', {
+            'paciente': self.paciente.id,
+            'fecha': '2026-03-01',
+            'monto_total': 99999,
+            'medio': 'transferencia',
+            'notas': 'Corregido',
+            'items': [{
+                'tratamiento': self.tratamiento.id,
+                'cantidad': 2,
+                'precio_unitario': '25000',
+                'subtotal': 12345,
+            }],
+        }, format='json')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data['medio'], 'transferencia')
+        self.assertEqual(response.data['notas'], 'Corregido')
+        self.assertEqual(str(response.data['monto_total']), '50000.00')
+        self.assertEqual(response.data['items'][0]['cantidad'], 2)
+        self.assertEqual(str(response.data['items'][0]['subtotal']), '50000.00')

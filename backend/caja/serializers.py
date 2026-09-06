@@ -45,22 +45,6 @@ class DuplicateTratamientoError(APIException):
         })
 
 
-class DuplicateTratamientoError(APIException):
-    status_code = 400
-
-    def __init__(self, existing):
-        super().__init__({
-            'code': 'duplicate_name',
-            'detail': 'Ya existe un tratamiento con ese nombre.',
-            'existing': {
-                'id': existing.id,
-                'nombre': existing.nombre,
-                'precio_base': str(existing.precio_base),
-                'activo': existing.activo,
-            },
-        })
-
-
 class TratamientoTipoSerializer(serializers.ModelSerializer):
     en_uso = serializers.SerializerMethodField()
 
@@ -139,33 +123,12 @@ class PagoSerializer(serializers.ModelSerializer):
 
     def validate(self, attrs):
         items = attrs.get('items')
-        if items is None and self.instance:
-            items = [
-                {
-<<<<<<< Updated upstream
-=======
-                    'tratamiento': item.tratamiento_id,
->>>>>>> Stashed changes
-                    'cantidad': item.cantidad,
-                    'precio_unitario': item.precio_unitario,
-                    'subtotal': item.subtotal,
-                }
-                for item in self.instance.items.all()
-            ]
-
-<<<<<<< Updated upstream
-        monto_total = attrs.get('monto_total')
-        if monto_total is None and self.instance:
-            monto_total = self.instance.monto_total
-=======
         if items is not None:
             normalized, total = _normalize_pago_items(items)
             attrs['items'] = normalized
             attrs['monto_total'] = total
-        elif attrs.get('monto_total') is not None and self.instance:
+        elif attrs.get('monto_total') is not None:
             attrs['monto_total'] = _money(attrs['monto_total'])
->>>>>>> Stashed changes
-
         return attrs
 
     @transaction.atomic
@@ -187,11 +150,7 @@ class PagoSerializer(serializers.ModelSerializer):
         if items_data is not None:
             instance.items.all().delete()
             for item_data in items_data:
-<<<<<<< Updated upstream
-                PagoItem.objects.create(pago=instance, **item_data)
-=======
                 clean = {key: item_data[key] for key in PAGO_ITEM_FIELDS}
                 PagoItem.objects.create(pago=instance, **clean)
->>>>>>> Stashed changes
 
         return instance
