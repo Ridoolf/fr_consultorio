@@ -1,5 +1,7 @@
 from django.db import models
+from django.db.models.functions import Lower
 from pacientes.models import Paciente
+
 
 class TratamientoTipo(models.Model):
     nombre = models.CharField(max_length=200)
@@ -10,6 +12,12 @@ class TratamientoTipo(models.Model):
         ordering = ['nombre']
         verbose_name = "Tratamiento"
         verbose_name_plural = "Tratamientos"
+        constraints = [
+            models.UniqueConstraint(
+                Lower('nombre'),
+                name='unique_tratamiento_nombre_ci',
+            ),
+        ]
 
     def __str__(self):
         return f"{self.nombre} (${self.precio_base})"

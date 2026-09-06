@@ -166,3 +166,31 @@ if not DEBUG:
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
+
+    from django.core.exceptions import ImproperlyConfigured
+
+    _insecure_secret = 'django-insecure-dhelk=%zv0wtygh(^^h%ul@(50s@c0o$gwi0%5x%kq=n!gpr&z'
+    if not os.environ.get('SECRET_KEY') or SECRET_KEY == _insecure_secret:
+        raise ImproperlyConfigured('SECRET_KEY debe estar definida en producción.')
+
+    db_engine = DATABASES['default'].get('ENGINE', '')
+    if 'postgresql' not in db_engine:
+        raise ImproperlyConfigured(
+            'En producción DATABASE_URL debe apuntar a PostgreSQL, no a SQLite.'
+        )
+
+    if '*' in ALLOWED_HOSTS:
+        raise ImproperlyConfigured(
+            'ALLOWED_HOSTS no puede ser "*" en producción. Definí el dominio de Render.'
+        )
+
+    if not CORS_ALLOWED_ORIGINS:
+        raise ImproperlyConfigured(
+            'CORS_ALLOWED_ORIGINS debe estar definido en producción.'
+        )
+
+    if not (CLOUDINARY_CLOUD_NAME and CLOUDINARY_API_KEY and CLOUDINARY_API_SECRET):
+        raise ImproperlyConfigured(
+            'Cloudinary (CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, '
+            'CLOUDINARY_API_SECRET) es obligatorio en producción.'
+        )

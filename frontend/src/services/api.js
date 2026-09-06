@@ -103,6 +103,8 @@ export const tratamientosAPI = {
 export const pagosAPI = {
   getAll: (params = {}) => api.get('/pagos/', { params }),
   create: (data) => api.post('/pagos/', data),
+  update: (id, data) => api.put(`/pagos/${id}/`, data),
+  delete: (id) => api.delete(`/pagos/${id}/`),
 };
 
 export default api;
