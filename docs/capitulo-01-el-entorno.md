@@ -51,7 +51,7 @@ Una **aplicación web** es un sistema donde:
 |----------------------|-------------|-------------------|
 | El comedor, menú, mesas | **Frontend** (lo que ves) | Carpeta `frontend/` (React) |
 | La cocina, recetas, reglas | **Backend** (lógica + datos) | Carpeta `backend/` (Django) |
-| La despensa / inventario | **Base de datos** | PostgreSQL (en producción) |
+| La despensa / inventario | **Base de datos** | PostgreSQL en **Neon** (producción) |
 | El mozo que lleva pedidos | **API REST** (HTTP + JSON) | Rutas bajo `/api/` |
 | El guardia en la puerta | **Autenticación** | JWT (tokens) |
 
@@ -97,8 +97,8 @@ Eso es **separar frontend y backend**: dos programas distintos que hablan por un
 
 **En este proyecto:**
 
-- PostgreSQL en producción (via `DATABASE_URL`)
-- SQLite posible en desarrollo local
+- **Producción:** PostgreSQL en [**Neon**](https://neon.tech) (conexión vía `DATABASE_URL` en Render)
+- **Desarrollo local:** SQLite (`backend/db.sqlite3`) con `USE_LOCAL_DB=true`
 - Los "planos" de las tablas están en `backend/*/models.py`
 
 ---
@@ -303,7 +303,7 @@ Supongamos que en el celular (o PC) abrís la lista de pacientes.
 **Diagrama:**
 
 ```
-[Navegador / React]  --HTTP+JSON-->  [Django + DRF]  --ORM-->  [PostgreSQL]
+[Navegador / React]  --HTTP+JSON-->  [Django + DRF en Render]  --ORM-->  [PostgreSQL en Neon]
        ↑                                    |
        └──────────── JSON response ─────────┘
 ```
@@ -318,7 +318,7 @@ Este flujo es **universal**. Cambiá Django por FastAPI y React por Vue: la form
 |--|-------------------|------------------------|
 | Frontend | `npm run dev` → :5173 | Netlify sirve `dist/` |
 | Backend | `python manage.py runserver` → :8000 | Render + Gunicorn |
-| DB | SQLite o Postgres local | Postgres en Render |
+| DB | SQLite local (`db.sqlite3`) | **Neon** (Postgres serverless) |
 | DEBUG | `True` (más info de errores) | `False` |
 | CORS | permite localhost:5173 | permite dominio Netlify |
 

@@ -11,6 +11,9 @@ import Spinner from '../components/ui/Spinner';
 import EmptyState from '../components/ui/EmptyState';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
 import DuplicateTratamientoDialog from '../components/ui/DuplicateTratamientoDialog';
+import TratamientoEditDialog from '../components/ui/TratamientoEditDialog';
+
+const emptyCreateForm = () => ({ nombre: '', precio_base: '' });
 
 function normalizeNombre(nombre) {
   return nombre.trim().toLowerCase();
@@ -40,7 +43,9 @@ function TratamientosPage() {
   const [tratamientos, setTratamientos] = useState([]);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState(null);
-  const [form, setForm] = useState({ id: null, nombre: '', precio_base: '' });
+  const [form, setForm] = useState(emptyCreateForm());
+  const [editForm, setEditForm] = useState(null);
+  const [editError, setEditError] = useState(null);
   const [guardando, setGuardando] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(null);
   const [confirmToggle, setConfirmToggle] = useState(null);
@@ -64,11 +69,12 @@ function TratamientosPage() {
 
   useEffect(() => { cargarTratamientos(); }, [cargarTratamientos]);
 
-  const resetForm = () => setForm({ id: null, nombre: '', precio_base: '' });
+  const resetCreateForm = () => setForm(emptyCreateForm());
 
   const guardarTratamiento = async (payload, id = null) => {
     setGuardando(true);
     setError(null);
+    setEditError(null);
     try {
       if (id) {
         await tratamientosAPI.update(id, payload);
@@ -77,7 +83,8 @@ function TratamientosPage() {
         await tratamientosAPI.create(payload);
         showToast('Tratamiento creado', 'success');
       }
-      resetForm();
+      resetCreateForm();
+      setEditForm(null);
       await cargarTratamientos();
       return true;
     } catch (err) {
@@ -89,7 +96,12 @@ function TratamientosPage() {
         });
         return false;
       }
-      setError(getErrorMessage(err, 'No se pudo guardar.'));
+      const msg = getErrorMessage(err, 'No se pudo guardar.');
+      if (id) {
+        setEditError(msg);
+      } else {
+        setError(msg);
+      }
       return false;
     } finally {
       setGuardando(false);
@@ -109,15 +121,50 @@ function TratamientosPage() {
       activo: true,
     };
 
-    if (!form.id) {
-      const dup = findDuplicate(tratamientos, form.nombre);
-      if (dup) {
-        setDuplicateDialog({ existing: dup, nuevoPrecio: form.precio_base });
-        return;
-      }
+    const dup = findDuplicate(tratamientos, form.nombre);
+    if (dup) {
+      setDuplicateDialog({ existing: dup, nuevoPrecio: form.precio_base });
+      return;
     }
 
-    await guardarTratamiento(payload, form.id);
+    await guardarTratamiento(payload);
+  };
+
+  const handleEditChange = (e) => {
+    const { name, value } = e.target;
+    setEditForm((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleEditSubmit = async (e) => {
+    e.preventDefault();
+    if (!editForm?.nombre?.trim() || !editForm?.precio_base) {
+      setEditError('Completá nombre y precio.');
+      return;
+    }
+
+    const dup = findDuplicate(tratamientos, editForm.nombre, editForm.id);
+    if (dup) {
+      setEditError(`Ya existe "${dup.nombre}". Elegí otro nombre.`);
+      return;
+    }
+
+    await guardarTratamiento(
+      {
+        nombre: editForm.nombre.trim(),
+        precio_base: editForm.precio_base,
+        activo: true,
+      },
+      editForm.id,
+    );
+  };
+
+  const abrirEditar = (t) => {
+    setEditError(null);
+    setEditForm({
+      id: t.id,
+      nombre: t.nombre,
+      precio_base: String(t.precio_base),
+    });
   };
 
   const handleUpdatePriceFromDialog = async () => {
@@ -134,22 +181,18 @@ function TratamientosPage() {
     );
   };
 
-  const handleEditInFormFromDialog = () => {
+  const handleEditFromDuplicateDialog = () => {
     if (!duplicateDialog?.existing) return;
     const { existing } = duplicateDialog;
-    setForm({
-      id: existing.id,
-      nombre: existing.nombre,
-      precio_base: String(existing.precio_base),
-    });
     setDuplicateDialog(null);
+    abrirEditar(existing);
   };
 
   const handleDelete = async (t) => {
     try {
       await tratamientosAPI.delete(t.id);
       showToast('Tratamiento eliminado', 'success');
-      if (form.id === t.id) resetForm();
+      if (editForm?.id === t.id) setEditForm(null);
       await cargarTratamientos();
     } catch (err) {
       showToast(getErrorMessage(err, 'No se pudo eliminar (puede estar en uso).'), 'error');
@@ -166,7 +209,7 @@ function TratamientosPage() {
         activo: !t.activo,
       });
       showToast(t.activo ? 'Tratamiento desactivado' : 'Tratamiento activado', 'success');
-      if (form.id === t.id && t.activo) resetForm();
+      if (editForm?.id === t.id && t.activo) setEditForm(null);
       await cargarTratamientos();
     } catch (err) {
       showToast(getErrorMessage(err, 'No se pudo actualizar el tratamiento.'), 'error');
@@ -182,6 +225,9 @@ function TratamientosPage() {
       {error && <div className="error-box">{error}</div>}
 
       <Card>
+        <h3 className="page-header-title" style={{ fontSize: '1.1rem', marginBottom: '1rem' }}>
+          Nuevo tratamiento
+        </h3>
         <form onSubmit={handleSubmit} className="form-grid">
           <div className="form-row-2">
             <div className="form-field">
@@ -210,13 +256,8 @@ function TratamientosPage() {
           </div>
           <div className="form-actions">
             <Button type="submit" variant="primary" disabled={guardando}>
-              {guardando ? 'Guardando...' : form.id ? 'Guardar cambios' : 'Agregar'}
+              {guardando && !editForm ? 'Guardando...' : 'Agregar'}
             </Button>
-            {form.id && (
-              <Button type="button" variant="secondary" onClick={resetForm}>
-                Cancelar
-              </Button>
-            )}
           </div>
         </form>
       </Card>
@@ -265,7 +306,7 @@ function TratamientosPage() {
                 <Button
                   size="sm"
                   variant="secondary"
-                  onClick={() => setForm({ id: t.id, nombre: t.nombre, precio_base: String(t.precio_base) })}
+                  onClick={() => abrirEditar(t)}
                 >
                   Editar
                 </Button>
@@ -296,6 +337,16 @@ function TratamientosPage() {
         )}
       </Card>
 
+      <TratamientoEditDialog
+        open={Boolean(editForm)}
+        form={editForm || { nombre: '', precio_base: '' }}
+        guardando={guardando}
+        error={editError}
+        onChange={handleEditChange}
+        onCancel={() => { setEditForm(null); setEditError(null); }}
+        onSubmit={handleEditSubmit}
+      />
+
       <ConfirmDialog
         open={Boolean(confirmDelete)}
         title="Eliminar tratamiento"
@@ -322,7 +373,7 @@ function TratamientosPage() {
         nuevoPrecio={duplicateDialog?.nuevoPrecio}
         onCancel={() => setDuplicateDialog(null)}
         onUpdatePrice={handleUpdatePriceFromDialog}
-        onEditInForm={handleEditInFormFromDialog}
+        onEditInForm={handleEditFromDuplicateDialog}
       />
     </div>
   );

@@ -1,5 +1,21 @@
 # Guía de deploy — Consultorio
 
+## Arquitectura en producción
+
+| Componente | Servicio | Notas |
+|------------|----------|-------|
+| **Frontend** | Netlify | React/Vite estático |
+| **Backend (API)** | Render | Django + Gunicorn |
+| **Base de datos** | **Neon** | PostgreSQL serverless |
+
+Render **solo ejecuta el backend**. Los datos viven en **Neon**. La variable `DATABASE_URL` en Render debe apuntar a la connection string de Neon (no a Postgres de Render).
+
+Ejemplo de `DATABASE_URL`:
+
+```text
+postgresql://usuario:password@ep-xxx.neon.tech/neondb?sslmode=require
+```
+
 ## Variables de entorno en Render (backend)
 
 | Variable | Ejemplo | Requerida |
@@ -43,6 +59,13 @@ Para cambiar la contraseña de un usuario que ya existe:
 python manage.py create_consultorio_user --reset-password
 ```
 
+## Base de datos (Neon)
+
+- Crear proyecto en [Neon](https://console.neon.tech).
+- Copiar la connection string y pegarla en `DATABASE_URL` del servicio web en Render.
+- Las migraciones se aplican en el **build de Render** (`python manage.py migrate`).
+- **No** hace falta Postgres en Render si ya usás Neon; podés eliminar la instancia de Postgres de Render una vez verificado que la app funciona con Neon.
+
 ## Variables en Netlify (frontend)
 
 | Variable | Valor |
@@ -61,11 +84,14 @@ python manage.py create_consultorio_user --reset-password
 
 ## Desarrollo local
 
+En local la base de datos es **SQLite** (`backend/db.sqlite3`), independiente de Neon.
+
 ```bash
 # Backend
 cd backend
 .\venv\Scripts\activate
 pip install -r requirements.txt
+set USE_LOCAL_DB=true
 set CONSULTORIO_USER=consultorio
 set CONSULTORIO_PASSWORD=tu_password_local
 python manage.py migrate
