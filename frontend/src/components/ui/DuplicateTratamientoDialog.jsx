@@ -43,7 +43,7 @@ function DuplicateTratamientoDialog({
                 </Button>
               )}
               <Button variant="secondary" size="lg" onClick={onEditInForm}>
-                Editar en formulario
+                Editar tratamiento
               </Button>
               <Button variant="secondary" size="lg" onClick={onCancel}>
                 Cancelar

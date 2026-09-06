@@ -6,7 +6,7 @@ export function getErrorMessage(err, fallback = 'Ocurrió un error inesperado.')
   if (typeof data === 'string') {
     if (data.trim().startsWith('<!') || data.includes('<html')) {
       if (status === 404) {
-        return 'El servidor no encontró el recurso. Verificá que el backend esté actualizado (deploy en Render) y que las migraciones estén aplicadas.';
+        return 'El servidor no encontró el recurso. Verificá que el backend esté actualizado y que las migraciones estén aplicadas en Neon.';
       }
       return fallback;
     }

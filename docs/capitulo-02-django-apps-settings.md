@@ -299,8 +299,8 @@ DATABASES = {
 
 **Concepto:**
 
-- **Desarrollo local:** puede usar SQLite (archivo `db.sqlite3` en `backend/`).
-- **Producción (Render):** usa `DATABASE_URL` apuntando a PostgreSQL.
+- **Desarrollo local:** SQLite (`backend/db.sqlite3`) con `USE_LOCAL_DB=true`.
+- **Producción:** PostgreSQL en **Neon**, conectado desde Render mediante `DATABASE_URL` (incluir `?sslmode=require`).
 
 También existe `USE_LOCAL_DB=true` para forzar SQLite aunque haya `DATABASE_URL` (útil para desarrollo aislado).
 
@@ -313,11 +313,11 @@ Muchos valores vienen de `os.environ.get(...)`:
 | `SECRET_KEY` | Firmar tokens, cookies, sesiones |
 | `DEBUG` | Modo desarrollo (más errores visibles) |
 | `ALLOWED_HOSTS` | Qué dominios pueden llamar al servidor |
-| `DATABASE_URL` | Conexión a Postgres |
+| `DATABASE_URL` | Conexión a Postgres en **Neon** |
 | `CORS_ALLOWED_ORIGINS` | Qué frontends pueden llamar a la API |
 | `CLOUDINARY_*` | Subida de archivos a la nube |
 
-**Regla universal:** **nunca** subas secretos al repo. En local: archivo `.env`. En producción: panel de Render/Netlify.
+**Regla universal:** **nunca** subas secretos al repo. En local: archivo `.env`. En producción: panel de Render (backend), Neon (base de datos) y Netlify (frontend).
 
 El proyecto carga `.env` al inicio de settings:
 
