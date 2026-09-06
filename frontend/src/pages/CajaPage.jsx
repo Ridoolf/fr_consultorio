@@ -24,18 +24,67 @@ const emptyForm = () => ({
   notas: '',
 });
 
+<<<<<<< Updated upstream
 function pagoToEditForm(pago) {
   const item = pago.items?.[0] || {};
   const cantidad = item.cantidad || 1;
   const precio = item.precio_unitario || '';
+=======
+function getTratamientoId(item) {
+  const t = item?.tratamiento;
+  if (t == null || t === '') return '';
+  if (typeof t === 'object') return String(t.id ?? '');
+  return String(t);
+}
+
+function calcularTotales(cantidad, precioUnitario) {
+  const cantidadNum = Math.max(1, Number(cantidad) || 1);
+  const precioNum = Number(precioUnitario) || 0;
+  const subtotal = Math.round(cantidadNum * precioNum * 100) / 100;
+  return { cantidad: cantidadNum, precio_unitario: precioNum, subtotal, monto_total: subtotal };
+}
+
+function buildPagoPayload(form) {
+  const { cantidad, precio_unitario, subtotal, monto_total } = calcularTotales(
+    form.cantidad,
+    form.precio_unitario,
+  );
+  return {
+    paciente: Number(form.paciente),
+    fecha: form.fecha,
+    monto_total,
+    medio: form.medio,
+    notas: form.notas || '',
+    items: [{
+      tratamiento: Number(form.tratamiento),
+      cantidad,
+      precio_unitario,
+      subtotal,
+    }],
+  };
+}
+
+function pagoToEditForm(pago) {
+  const item = pago.items?.[0] || {};
+  const cantidad = item.cantidad || 1;
+  const precio = item.precio_unitario ?? '';
+  const totales = calcularTotales(cantidad, precio);
+>>>>>>> Stashed changes
   return {
     id: pago.id,
     paciente: String(pago.paciente),
     fecha: pago.fecha,
+<<<<<<< Updated upstream
     tratamiento: String(item.tratamiento || ''),
     cantidad,
     precio_unitario: precio,
     monto_total: pago.monto_total,
+=======
+    tratamiento: getTratamientoId(item),
+    cantidad: totales.cantidad,
+    precio_unitario: totales.precio_unitario || precio,
+    monto_total: totales.monto_total,
+>>>>>>> Stashed changes
     medio: pago.medio,
     notas: pago.notas || '',
   };
@@ -106,8 +155,8 @@ function CajaPage() {
     if (!t) return;
     setForm((prev) => {
       const precio = prev.precio_unitario || t.precio_base;
-      const cantidad = Number(prev.cantidad) || 1;
-      return { ...prev, precio_unitario: precio, monto_total: Number(precio) * cantidad };
+      const totales = calcularTotales(prev.cantidad, precio);
+      return { ...prev, precio_unitario: precio, ...totales };
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [form.tratamiento]);
@@ -117,9 +166,34 @@ function CajaPage() {
     setForm((prev) => {
       const nuevo = { ...prev, [name]: value };
       if (name === 'cantidad' || name === 'precio_unitario') {
-        const cantidad = Number(name === 'cantidad' ? value : nuevo.cantidad) || 1;
-        const precio = Number(name === 'precio_unitario' ? value : nuevo.precio_unitario) || 0;
-        nuevo.monto_total = cantidad * precio || '';
+        const totales = calcularTotales(
+          name === 'cantidad' ? value : nuevo.cantidad,
+          name === 'precio_unitario' ? value : nuevo.precio_unitario,
+        );
+        Object.assign(nuevo, totales);
+      }
+      return nuevo;
+    });
+  };
+
+  const handleEditChange = (e) => {
+    const { name, value } = e.target;
+    setEditForm((prev) => {
+      const nuevo = { ...prev, [name]: value };
+      if (name === 'cantidad' || name === 'precio_unitario') {
+        const totales = calcularTotales(
+          name === 'cantidad' ? value : nuevo.cantidad,
+          name === 'precio_unitario' ? value : nuevo.precio_unitario,
+        );
+        Object.assign(nuevo, totales);
+      }
+      if (name === 'tratamiento') {
+        const t = tratamientosEdit.find((x) => x.id === Number(value));
+        if (t) {
+          const totales = calcularTotales(nuevo.cantidad, t.precio_base);
+          nuevo.precio_unitario = t.precio_base;
+          Object.assign(nuevo, totales);
+        }
       }
       return nuevo;
     });
@@ -161,26 +235,14 @@ function CajaPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!form.tratamiento || !form.monto_total) {
+    if (!form.tratamiento || !form.precio_unitario) {
       setError('Completá tratamiento y monto.');
       return;
     }
     setGuardando(true);
     setError(null);
     try {
-      await pagosAPI.create({
-        paciente: Number(form.paciente),
-        fecha: form.fecha,
-        monto_total: form.monto_total,
-        medio: form.medio,
-        notas: form.notas,
-        items: [{
-          tratamiento: Number(form.tratamiento),
-          cantidad: Number(form.cantidad) || 1,
-          precio_unitario: Number(form.precio_unitario) || 0,
-          subtotal: Number(form.monto_total) || 0,
-        }],
-      });
+      await pagosAPI.create(buildPagoPayload(form));
       showToast('Cobro registrado', 'success');
       await cargarPagos(filtros);
       setForm({ ...emptyForm(), fecha: form.fecha });
@@ -194,24 +256,40 @@ function CajaPage() {
 
   const abrirEditar = async (pago) => {
     setEditError(null);
+<<<<<<< Updated upstream
     try {
       const res = await tratamientosAPI.getAll({ activos: 'false' });
       setTratamientosEdit(res.data);
     } catch {
       setTratamientosEdit(tratamientos);
     }
+=======
+    let lista = tratamientos;
+    try {
+      const res = await tratamientosAPI.getAll({ activos: 'false' });
+      lista = res.data;
+    } catch {
+      /* usar lista activa */
+    }
+    setTratamientosEdit(lista);
+>>>>>>> Stashed changes
     setEditForm(pagoToEditForm(pago));
   };
 
   const handleEditSubmit = async (e) => {
     e.preventDefault();
+<<<<<<< Updated upstream
     if (!editForm?.tratamiento || !editForm?.monto_total) {
+=======
+    if (!editForm?.tratamiento || editForm?.precio_unitario === '') {
+>>>>>>> Stashed changes
       setEditError('Completá tratamiento y monto.');
       return;
     }
     setGuardando(true);
     setEditError(null);
     try {
+<<<<<<< Updated upstream
       await pagosAPI.update(editForm.id, {
         paciente: Number(editForm.paciente),
         fecha: editForm.fecha,
@@ -225,11 +303,20 @@ function CajaPage() {
           subtotal: Number(editForm.monto_total) || 0,
         }],
       });
+=======
+      await pagosAPI.update(editForm.id, buildPagoPayload(editForm));
+>>>>>>> Stashed changes
       showToast('Cobro actualizado', 'success');
       setEditForm(null);
       await cargarPagos(filtros);
     } catch (err) {
+<<<<<<< Updated upstream
       setEditError(getErrorMessage(err, 'No se pudo actualizar el cobro.'));
+=======
+      const detalle = getErrorMessage(err, 'No se pudo actualizar el cobro.');
+      const status = err?.response?.status;
+      setEditError(status ? `${detalle} (error ${status})` : detalle);
+>>>>>>> Stashed changes
     } finally {
       setGuardando(false);
     }
