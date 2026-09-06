@@ -39,9 +39,9 @@
   --space-4: 1rem;
   --space-5: 1.25rem;
   --space-6: 1.5rem;
-  /* Altura visible real en móvil (evita que 100vh tape el footer del sidebar) */
+  /* Altura visible: fallback CSS + actualización JS vía visualViewport en móvil */
   --app-height: 100vh;
-  --app-height: 100svh;
+  --app-height: 100dvh;
 }
 
 * {
@@ -1338,7 +1338,7 @@ a:hover {
 
 /* Login */
 .login-page {
-  min-height: 100vh;
+  min-height: var(--app-height);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1445,7 +1445,10 @@ a:hover {
 /* Dialog */
 .dialog-overlay {
   position: fixed;
-  inset: 0;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: var(--app-height);
   background: rgba(0, 0, 0, 0.4);
   display: flex;
   align-items: center;
@@ -1586,7 +1589,7 @@ a:hover {
 
 /* Auth loading */
 .auth-loading {
-  min-height: 100vh;
+  min-height: var(--app-height);
   display: flex;
   align-items: center;
   justify-content: center;
