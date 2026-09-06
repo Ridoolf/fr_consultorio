@@ -1,6 +1,17 @@
+from django.db.models.deletion import ProtectedError
 from rest_framework import viewsets, filters
+from rest_framework.exceptions import APIException
 from .models import TratamientoTipo, Pago
 from .serializers import TratamientoTipoSerializer, PagoSerializer
+
+
+class TratamientoEnUsoError(APIException):
+    status_code = 409
+    default_detail = (
+        'No se puede eliminar porque tiene cobros registrados. '
+        'Desactivá el tratamiento en su lugar.'
+    )
+
 
 class TratamientoTipoViewSet(viewsets.ModelViewSet):
     queryset = TratamientoTipo.objects.all()
@@ -12,10 +23,20 @@ class TratamientoTipoViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         qs = super().get_queryset()
+        if self.action in ('retrieve', 'update', 'partial_update', 'destroy'):
+            return qs
         activos = self.request.query_params.get('activos')
-        if activos and activos.lower() == 'true':
+        if activos is not None and activos.lower() == 'false':
+            return qs
+        if activos is None or activos.lower() == 'true':
             qs = qs.filter(activo=True)
         return qs
+
+    def perform_destroy(self, instance):
+        try:
+            super().perform_destroy(instance)
+        except ProtectedError:
+            raise TratamientoEnUsoError()
 
 
 class PagoViewSet(viewsets.ModelViewSet):
